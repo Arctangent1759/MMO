@@ -8,4 +8,18 @@ Instructions
 + install box2d: npm install box2d
 + running: node index.js
 
-edit: tests and stuff
+Modules
+-------
++ Client
+  + User Input
+	+ TBD
+  + Graphics
+	+ assets/js/main.js: paint()
+	+ assets/html/index.html
+  + Update
+	+ assets/js/main.js: update()
++ Server
+  + User Input
+	+ handle.js (?)
+  + Physics
+	+ game.js: gameLoop()
