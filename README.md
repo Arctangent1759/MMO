@@ -10,6 +10,7 @@ Instructions
 
 Modules
 -------
+
 ###Client
 + User Input
   + TBD
@@ -18,6 +19,7 @@ Modules
   + assets/html/index.html
 + Update
   + assets/js/main.js: update()
+
 ###Server
 + User Input
   + handle.js (?)
