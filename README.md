@@ -10,16 +10,16 @@ Instructions
 
 Modules
 -------
-+ Client
-  + User Input
-    + TBD
-  + Graphics
-    + assets/js/main.js: paint()
-    + assets/html/index.html
-  + Update
-    + assets/js/main.js: update()
-+ Server
-  + User Input
-    + handle.js (?)
-  + Physics
-    + game.js: gameLoop()
+###Client
++ User Input
+  + TBD
++ Graphics
+  + assets/js/main.js: paint()
+  + assets/html/index.html
++ Update
+  + assets/js/main.js: update()
+###Server
++ User Input
+  + handle.js (?)
++ Physics
+  + game.js: gameLoop()
