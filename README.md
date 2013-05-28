@@ -25,3 +25,11 @@ Modules
   + handle.js (?)
 + Physics
   + game.js: gameLoop()
+
+Assignments
+-----------
++ Alex: User Input (serverside)
++ Nitin: Physics
++ Kara: Graphics
++ Will: Update
++ Robert: User Input (clientside)
