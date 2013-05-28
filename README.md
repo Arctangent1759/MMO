@@ -12,14 +12,14 @@ Modules
 -------
 + Client
   + User Input
-	+ TBD
+    + TBD
   + Graphics
-	+ assets/js/main.js: paint()
-	+ assets/html/index.html
+    + assets/js/main.js: paint()
+    + assets/html/index.html
   + Update
-	+ assets/js/main.js: update()
+    + assets/js/main.js: update()
 + Server
   + User Input
-	+ handle.js (?)
+    + handle.js (?)
   + Physics
-	+ game.js: gameLoop()
+    + game.js: gameLoop()
