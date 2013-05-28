@@ -1,0 +1,13 @@
+<html>
+  <head></head>
+  <body>
+	<h1>
+	  500
+	</h1>
+	<p id="message"></p>
+	<script>
+	  var messages = ['\'Robert\'); DROP TABLE Students;\' is not a valid name. But our database is gone now. Nice one, genius.','You broke it. Congrats.','You melted something in our server bank. Jerk.','Is the recipricol of your IQ.','Internal Server Error. Nincompoop',]
+	  document.getElementById("message").innerHTML=messages[Math.floor(Math.random()*messages.length)];
+	</script>
+  </body>
+</html>
