@@ -4,5 +4,6 @@ Top Down Shooter (name tbd)
 
 Instructions
 ------------
-+ install box2d: npm install box2s
++ install node (using package manager or from http://nodejs.org/)
++ install box2d: npm install box2d
 + running: node index.js
