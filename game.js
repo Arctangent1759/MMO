@@ -5,21 +5,10 @@ function gameLoop(){
   worldAABB.lowerBound.Set(-100.0, -100.0);
   worldAABB.upperBound.Set(100.0, 100.0);
 
-  var gravity = new b2d.b2Vec2(0.0, -10.0);
+  var gravity = new b2d.b2Vec2(0.0, 0.0);
   var doSleep = true;
 
   var world = new b2d.b2World(worldAABB, gravity, doSleep);
-
-  // Ground Box
-  var groundBodyDef = new b2d.b2BodyDef();
-  groundBodyDef.position.Set(0.0, -10.0);
-
-  var groundBody = world.CreateBody(groundBodyDef);
-
-  var groundShapeDef = new b2d.b2PolygonDef();
-  groundShapeDef.SetAsBox(50.0, 10.0);
-
-  groundBody.CreateShape(groundShapeDef);
 
   // Dynamic Body
   var bodyDef = new b2d.b2BodyDef();
