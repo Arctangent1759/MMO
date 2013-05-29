@@ -1,0 +1,17 @@
+william.update
+
+inputs:
+- all objects in the current frame from server
+	- player info (ex. view angle of all players)
+	- map info (ex. changes in environment)
+	- chat info, stats menu, timer
+
+processing:
+- filters user input by relevance for client (ex. distance from player)
+	- when and where to make map shadowed or black (fog of war and shroud for unexplored regions
+	- sounds and lighting
+	- apply changes in pixel colors to the map/image
+	- ???
+
+outputs:
+- passes filtered results to kara.graphics, who sets everything on an outlined canvas and renders
