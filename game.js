@@ -32,7 +32,7 @@ function gameLoop(){
 	world.Step(timeStep, iterations);
 	var position = body.GetPosition();
 	var angle = body.GetAngle();
-	console.log(i+": <"+position.x+", "+position.y+"> @"+angle);
+	//console.log(i+": <"+position.x+", "+position.y+"> @"+angle);
   }
 }
 
