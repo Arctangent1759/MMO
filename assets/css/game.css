@@ -3,9 +3,12 @@ body {
   color:#000000;
   background-color:#F6F4F0;
   margin:0px;
-  text-align:center;
 }
 .game_container {
   border:1px solid black;
   vertical-align:middle;
+}
+
+a.login-button{
+  font-size:10em;
 }

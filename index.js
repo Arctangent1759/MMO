@@ -1,5 +1,4 @@
-//Constants
-var FRICTION=.5;
+var constants=require('./server_constants.js').constants;
 
 var server=require('./server.js');
 var router=require('./router.js').route;
