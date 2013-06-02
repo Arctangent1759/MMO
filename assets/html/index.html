@@ -44,6 +44,9 @@
 	  </div>
 
 	  <div class='modal-body'>
+
+		<div id="loginerrordisplay" class="alert alert-error" style="display:none"></div>
+
 		<form class="form-horizontal">
 
 		  <div class="control-group">
@@ -63,9 +66,39 @@
 		  <div class="control-group">
 			<div class="controls">
 			  <label class="checkbox">
-				<input type="checkbox"> Remember me
+				<input type="checkbox" id="loginPersistent"> Remember me
 			  </label>
-			  <button type="submit" class="btn">Sign in</button>
+			  <a class="btn" onclick="
+				var socket=io.connect('http://'+window.location.host);
+				socket.emit('login',{
+				  email:$('#loginEmail').val(),
+				  password:$('#loginPassword').val(),
+				  persistent:$('#loginPersistent').prop('checked'),
+				  password_confirmation:$('#newUserPasswordConfirmation').val(),
+				});
+
+				//Next semester's resolutions: Burn fewer bridges. Literally.
+				//(Or burn more. Whichever furthers the cause of me taking over the world.)
+				//The time is now 3:33AM.
+
+				socket.on('loginResult',function(data){
+				  console.log('login result recieved');
+				  if (data.sessionId){
+					console.log('login success');
+					//Login success
+					document.cookie='sessionId='+data.sessionId;
+					console.log(data.sessionId);
+					$('#loginerrordisplay').hide();
+				  }else{
+					console.log('login failure');
+					//Login failed
+					if (data.error){
+					  $('#loginerrordisplay').html('Login Failed.');
+					  $('#loginerrordisplay').show();
+					}
+				  }
+				});
+				">Sign in</a>
 			</div>
 		  </div>
 
@@ -121,7 +154,7 @@
 
 		  <div class="control-group">
 			<div class="controls">
-			  <button type="submit" class="btn" onclick="
+			  <a href="#" class="btn" onclick="
 				var socket=io.connect('http://'+window.location.host);
 				socket.emit('newUser',{
 				  email:$('#newUserEmail').val(),
@@ -136,8 +169,8 @@
 				  }else{
 					$('#errordisplay').hide();
 				  }
-				})
-				">Submit</button>
+				});
+				">Submit</a>
 			</div>
 		  </div>
 

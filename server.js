@@ -10,6 +10,49 @@ function start(route,handle){
   //Collection of User Objects
   var userDb;
 
+  //All session keys and associated clientside data. Kids, don't make your data structures this way.
+  var sessions={
+	__list:{},
+	insert:function(key,email,username,persistent){
+	  if (this.has(key)){
+		return false;
+	  }
+	  this.get(key);
+	  this.__list[key]={
+		last_accessed:new Date(),
+		email:email,
+		username:username,
+		persistent:persistent,
+	  };
+	  return true;
+	},
+	remove:function(key){
+	  if (!this.has(key)){
+		return false;
+	  }
+	  __list.remove(key);
+	  return true;
+	},
+	has:function(key){
+	  return this.hasOwnProperty(key);
+	},
+	get:function(key){
+	  if (!this.has(key)){
+		return false;
+	  }
+	  __list[key].last_accessed=new Date();
+	  return __list[key];
+	},
+	purge:function(){
+	  for (var i in this.__list){
+	    if (!this.__list[i].persistent && new Date()-this.__list[i].last_accessed>constants.session_timeout){
+		  //Kill session if it's not marked as persistent and last_accessed is older than session_timeout.
+		  this.remove(i);
+		}
+	  }
+	},
+  };
+
   async.series([
 
 	function printStarting(next){
@@ -46,22 +89,27 @@ function start(route,handle){
 	  });
 	  io.listen(server).on('connection',function(socket){
 
-		var auth=false; //Keeps track of whether current user is logged on.
-		var user; //Holds user data; defined iff auth is true.
-
 		//Listen to client
 		
 		//Login
 		socket.on('login',function(data){
-		  if (!auth){ //Log in only if auth is true.
-		  }else{
-		  }
+		  console.log('Login recieved.');
+		  userDb.findOne({email:data.email},function(err,item){
+			console.log('Database query successful.');
+			if (item && pwHash(data.password)==item.password){
+			  //Successful Login
+			  socket.emit('loginResult',{sessionId:genSessionKey(sessions,item,data.persistent)})
+			  console.log("logged on!");
+			}else{
+			  //Failed Login
+			  socket.emit('loginResult',{sessionId:false, error:'Incorrect password.'});
+			  console.log("Failed log on!");
+			}
+		  });
 		});
 
 		//Logout
 		socket.on('logout',function(data){
-		  auth=false; //Unauthenticate and wipe user.
-		  user=undefined;
 		});
 
 		//NewUser
@@ -107,9 +155,6 @@ function start(route,handle){
 	
 		//Ingame Commands
 		socket.on('command',function(data){
-		  if (auth){ //Accept commands only if logged in
-		  }else{
-		  }
 		});
 
 
@@ -123,6 +168,9 @@ function start(route,handle){
 
 
 	  });
+	},
+	function startPurgeProcess(){
+	  setInterval(sessions.purge,60000);
 	},
 	function finish(){
 	  console.log("Server started.");
@@ -146,6 +194,15 @@ function pwHash(pw){
 	hash+=pw.charCodeAt(i)*Math.pow(0x10,i)%70368760954879;
   }
   return hash;
+}
+
+function genSessionKey(sessions,item,persistent){
+  var key;
+  do{
+	//Randomize crap! It's 3:20AM! feel free to make this work better.
+	key=((Math.random()*pwHash(item.username))+Number(new Date()))%70368760954879;
+  }while(!sessions.insert(key,item.email,item.username,persistent));
+  return key;
 }
 
 exports.start=start;
