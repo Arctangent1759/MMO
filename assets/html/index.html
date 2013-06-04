@@ -15,8 +15,9 @@
 			console.log('login success');
 			//Login success
 			document.cookie='sessionId='+data.sessionId;
-			console.log(data.sessionId);
+			document.cookie='username='+data.username;
 			$('#loginerrordisplay').hide();
+			document.location='game.html';
 		  }else{
 			console.log('login failure');
 			//Login failed
@@ -60,6 +61,7 @@
 	  <div class="span3">
 		<center><a data-toggle="modal"  href="#login_modal" class="btn btn-large btn-warning"><h1>Log-in</h1></a></center>
 	  </div>
+
 	  <div class="span2"></div>
 	</div>
 

@@ -122,6 +122,7 @@ function start(route,handle){
 
 		//Logout
 		socket.on('logout',function(data){
+		  sessions.remove(data.sessionKey);
 		});
 
 		//NewUser
@@ -160,6 +161,21 @@ function start(route,handle){
 				  }
 				});
 		 
+			  }
+			});
+		  }
+		});
+
+		//Allows user data retrieval
+		socket.on('getUserData',function(data){
+		  if (!sessions.get(data.key)){
+			socket.emit('userData',{error:'Your session has expired. Please log in again.'});
+		  }else{
+			userDb.findOne({email:sessions.get(data.key).email},function(err,item){
+			  if (err){
+				socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});  //TURING LIVES!
+			  }else{
+				socket.emit('createUserResult',{error:false,email:data.email,username:data.username});
 			  }
 			});
 		  }
