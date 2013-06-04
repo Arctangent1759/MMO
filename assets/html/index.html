@@ -4,6 +4,46 @@
 	<script src="jquery-1.9.1.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 	<script src="bootstrap.js"></script>
+	<script type="text/javascript">
+	  var socket;
+	  $(document).ready(function(){
+		socket=io.connect('http://'+window.location.host);
+
+		socket.on('loginResult',function(data){
+		  console.log('login result recieved');
+		  if (data.sessionId){
+			console.log('login success');
+			//Login success
+			document.cookie='sessionId='+data.sessionId;
+			console.log(data.sessionId);
+			$('#loginerrordisplay').hide();
+		  }else{
+			console.log('login failure');
+			//Login failed
+			if (data.error){
+			  $('#loginerrordisplay').html('Login Failed.');
+			  $('#loginerrordisplay').show();
+			}
+		  }
+		});
+
+		socket.on('createUserResult',function(data){
+		  if (data.error){
+			//Error
+			$('#errordisplay').html(data.error);
+			$('#errordisplay').show();
+		  }else{
+			//Success
+			$('#errordisplay').hide();
+			$('#newUserForm').hide();
+			$('#newUserSuccess').html(data.successMessage);
+			$('#newUserSuccess').show();
+		  }
+		});
+
+
+	  });
+	</script>
 	<link href="bootstrap.css" rel="stylesheet" media="screen" type="text/css"/>
 	<link href="game.css" rel="stylesheet" media="screen" type="text/css"/>
   </head>
@@ -47,7 +87,7 @@
 
 		<div id="loginerrordisplay" class="alert alert-error" style="display:none"></div>
 
-		<form class="form-horizontal">
+		<form class="form-horizontal" id="#loginForm">
 
 		  <div class="control-group">
 			<label class="control-label" for="loginEmail">Email</label>
@@ -69,7 +109,6 @@
 				<input type="checkbox" id="loginPersistent"> Remember me
 			  </label>
 			  <a class="btn" onclick="
-				var socket=io.connect('http://'+window.location.host);
 				socket.emit('login',{
 				  email:$('#loginEmail').val(),
 				  password:$('#loginPassword').val(),
@@ -81,23 +120,6 @@
 				//(Or burn more. Whichever furthers the cause of me taking over the world.)
 				//The time is now 3:33AM.
 
-				socket.on('loginResult',function(data){
-				  console.log('login result recieved');
-				  if (data.sessionId){
-					console.log('login success');
-					//Login success
-					document.cookie='sessionId='+data.sessionId;
-					console.log(data.sessionId);
-					$('#loginerrordisplay').hide();
-				  }else{
-					console.log('login failure');
-					//Login failed
-					if (data.error){
-					  $('#loginerrordisplay').html('Login Failed.');
-					  $('#loginerrordisplay').show();
-					}
-				  }
-				});
 				">Sign in</a>
 			</div>
 		  </div>
@@ -120,7 +142,8 @@
 	  </div>
 
 	  <div class='modal-body'>
-		<form class="form-horizontal">
+		<div id="newUserSuccess" class="alert alert-success" style="display:none"></div>
+		<form class="form-horizontal" id="newUserForm">
 
 		  <div id="errordisplay" class="alert alert-error" style="display:none"></div>
 
@@ -155,20 +178,11 @@
 		  <div class="control-group">
 			<div class="controls">
 			  <a href="#" class="btn" onclick="
-				var socket=io.connect('http://'+window.location.host);
 				socket.emit('newUser',{
 				  email:$('#newUserEmail').val(),
 				  username:$('#newUserUsername').val(),
 				  password:$('#newUserPassword').val(),
 				  password_confirmation:$('#newUserPasswordConfirmation').val(),
-				});
-				socket.on('createUserResult',function(data){
-				  if (data.error){
-					$('#errordisplay').html(data.error);
-					$('#errordisplay').show();
-				  }else{
-					$('#errordisplay').hide();
-				  }
 				});
 				">Submit</a>
 			</div>

@@ -13,23 +13,32 @@ function start(route,handle){
   //All session keys and associated clientside data. Kids, don't make your data structures this way.
   var sessions={
 	__list:{},
+	__EmailToKey:{},
+	__size:0,
 	insert:function(key,email,username,persistent){
 	  if (this.has(key)){
+		//Disallow key collisions
 		return false;
 	  }
-	  this.get(key);
+	  if (this.__EmailToKey[email]){
+		return this.__EmailToKey[email];
+	  }
 	  this.__list[key]={
 		last_accessed:new Date(),
 		email:email,
 		username:username,
 		persistent:persistent,
 	  };
-	  return true;
+	  this.__EmailToKey[email]=key;
+	  this.__size++;
+	  return key;
 	},
 	remove:function(key){
 	  if (!this.has(key)){
 		return false;
 	  }
+	  this.__size--;
+	  this.__EmailToKey.remove(__list[key].email);
 	  __list.remove(key);
 	  return true;
 	},
@@ -50,6 +59,9 @@ function start(route,handle){
 		  this.remove(i);
 		}
 	  }
+	},
+	size:function(){
+	  return __size;
 	},
   };
 
@@ -87,7 +99,7 @@ function start(route,handle){
 		console.log("\thttp started.")
 		next();
 	  });
-	  io.listen(server).on('connection',function(socket){
+	  io.listen(server, {log:false}).on('connection',function(socket){
 
 		//Listen to client
 		
@@ -98,7 +110,7 @@ function start(route,handle){
 			console.log('Database query successful.');
 			if (item && pwHash(data.password)==item.password){
 			  //Successful Login
-			  socket.emit('loginResult',{sessionId:genSessionKey(sessions,item,data.persistent)})
+			  socket.emit('loginResult',{sessionId:genSessionKey(sessions,item,data.persistent), username:item.username})
 			  console.log("logged on!");
 			}else{
 			  //Failed Login
@@ -140,16 +152,16 @@ function start(route,handle){
 					  password:pwHash(data.password)
 					},{safe:true},function(err,result){
 					  if (err){
-						socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});
+						socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});  //TURING LIVES!
 					  }else{
-						socket.emit('createUserResult',{error:false});
+						socket.emit('createUserResult',{error:false,successMessage:'Your account has been created. An account confirmation email has been sent to ' + data.email+'.'});
 					  }
 					});
 				  }
 				});
 		 
 			  }
-			})
+			});
 		  }
 		});
 	
@@ -169,8 +181,9 @@ function start(route,handle){
 
 	  });
 	},
-	function startPurgeProcess(){
+	function startPurgeProcess(next){
 	  setInterval(sessions.purge,60000);
+	  next();
 	},
 	function finish(){
 	  console.log("Server started.");
@@ -200,8 +213,8 @@ function genSessionKey(sessions,item,persistent){
   var key;
   do{
 	//Randomize crap! It's 3:20AM! feel free to make this work better.
-	key=((Math.random()*pwHash(item.username))+Number(new Date()))%70368760954879;
-  }while(!sessions.insert(key,item.email,item.username,persistent));
+	key=sessions.insert(((Math.random()*pwHash(item.username))+Number(new Date()))%70368760954879,item.email,item.username,persistent)
+  }while(!key);
   return key;
 }
 
