@@ -1,0 +1,16 @@
+Meeting 2 Agenda
+
+- specify in detail the vision of the game
+	- type of gameplay, pseudocode if-then events
+	- general user interface
+		- diagram of how the game will look like, with proper labeling
+- choose some general programs that will be used to prevent incompatibility (ex. image files)
+- determine input output formats of data/objects passed from module to module
+- get someone to do logging/documentation (ex. what goes on in these meetings so developers not present can read up on what's happened)
+- clarify the function of each module and what each developer does to modify the data, in great detail so as no one is confused
+	- consider idea of splitting as follows:
+		- two on client side (mostly the computational part)
+		- two on server side
+		- one working on the actual page (the html and css), sprites, user interface
+	- split the vision of the game earlier, with detailed specifics, to each developer
+- set tentative (extremely tentative) deadlines of how the project shall commence and what we need done by when in order to complete by end of summer
