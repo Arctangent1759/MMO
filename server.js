@@ -43,14 +43,14 @@ function start(route,handle){
 	  return true;
 	},
 	has:function(key){
-	  return this.hasOwnProperty(key);
+	  return this.__list.hasOwnProperty(key);
 	},
 	get:function(key){
 	  if (!this.has(key)){
 		return false;
 	  }
-	  __list[key].last_accessed=new Date();
-	  return __list[key];
+	  this.__list[key].last_accessed=new Date();
+	  return this.__list[key];
 	},
 	purge:function(){
 	  for (var i in this.__list){
@@ -105,30 +105,27 @@ function start(route,handle){
 		
 		//Login
 		socket.on('login',function(data){
-		  console.log('Login recieved.');
 		  userDb.findOne({email:data.email},function(err,item){
 			console.log('Database query successful.');
 			if (item && pwHash(data.password)==item.password){
 			  //Successful Login
-			  socket.emit('loginResult',{sessionId:genSessionKey(sessions,item,data.persistent), username:item.username})
-			  console.log("logged on!");
+			  socket.emit('loginResult',{sessionKey:genSessionKey(sessions,item,data.persistent)})
 			}else{
 			  //Failed Login
 			  socket.emit('loginResult',{sessionId:false, error:'Incorrect password.'});
-			  console.log("Failed log on!");
 			}
 		  });
 		});
 
 		//Logout
 		socket.on('logout',function(data){
+		  //Invalidates Session
 		  sessions.remove(data.sessionKey);
 		});
 
 		//NewUser
 		socket.on('newUser',function(data){
 		  console.log("newUser recieved");
-		  console.log("Data",data);
 		  if (!validateEmail(data.email)){
 			//Invalid email
 			socket.emit('createUserResult',{error:'Email  is invalid.'})
@@ -173,9 +170,10 @@ function start(route,handle){
 		  }else{
 			userDb.findOne({email:sessions.get(data.key).email},function(err,item){
 			  if (err){
-				socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});  //TURING LIVES!
+				socket.emit('userData',{error:'Internal server error. Something broke. We\'re sorry.'});
 			  }else{
-				socket.emit('createUserResult',{error:false,email:data.email,username:data.username});
+				socket.emit('userData',{error:false,email:item.email,username:item.username});
+				console.log({error:false,email:item.email,username:item.username});
 			  }
 			});
 		  }
@@ -229,7 +227,7 @@ function genSessionKey(sessions,item,persistent){
   var key;
   do{
 	//Randomize crap! It's 3:20AM! feel free to make this work better.
-	key=sessions.insert(((Math.random()*pwHash(item.username))+Number(new Date()))%70368760954879,item.email,item.username,persistent)
+	key=sessions.insert(pwHash(item.username+item.email).toString(16)+((Math.round(Math.random()*70368760954879)+Number(new Date()))%70368760954879).toString(16),item.email,item.username,persistent)
   }while(!key);
   return key;
 }
