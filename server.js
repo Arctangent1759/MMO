@@ -106,7 +106,6 @@ function start(route,handle){
 		//Login
 		socket.on('login',function(data){
 		  userDb.findOne({email:data.email},function(err,item){
-			console.log('Database query successful.');
 			if (item && pwHash(data.password)==item.password){
 			  //Successful Login
 			  socket.emit('loginResult',{sessionKey:genSessionKey(sessions,item,data.persistent)})
@@ -181,6 +180,21 @@ function start(route,handle){
 	
 		//Ingame Commands
 		socket.on('command',function(data){
+		});
+
+		socket.on('chat',function(data){
+		  //Check if user is logged on.
+		  var user = sessions.get(data.sessionKey);
+		  if (user){
+			var msg={
+			  sender:user.username,
+			  channel:data.channel,
+			  message:data.message,
+			  timestamp:new Date(),
+			};
+			socket.broadcast.emit('chat',msg);
+			socket.emit('chat',msg);
+		  }
 		});
 
 

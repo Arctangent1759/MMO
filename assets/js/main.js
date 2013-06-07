@@ -2,6 +2,10 @@
 var CONTAINER_ID="game";
 var CANVAS_ID="canvas";
 var PADDING=50;
+
+//sessionKey
+var sessionKey=processQueryString().sessionKey;
+
 $(document).ready(function(){
   init();
   setInterval(run,16);
@@ -41,3 +45,21 @@ function run(){
 function paint(){
    window.requestAnimFrame(paint);
 }
+
+
+var socket=io.connect('http://'+window.location.host);
+
+function sendChat(message,channel){
+  var msg={
+	sessionKey:sessionKey,
+	channel:channel,
+	message:message,
+  };
+  socket.emit('chat',msg);
+}
+
+function recieveChat(data){
+  console.log('@'+data.timestamp+'  ---  '+data.sender+' >> '+data.channel+': ' + data.message);
+}
+
+socket.on('chat',recieveChat);
