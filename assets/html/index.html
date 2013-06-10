@@ -18,7 +18,7 @@
 		  }else{
 			//Login failed
 			if (data.error){
-			  $('#loginerrordisplay').html('Login Failed.');
+			  $('#loginerrordisplay').html(data.error);
 			  $('#loginerrordisplay').show();
 			}
 		  }
@@ -109,7 +109,6 @@
 				  email:$('#loginEmail').val(),
 				  password:$('#loginPassword').val(),
 				  persistent:$('#loginPersistent').prop('checked'),
-				  password_confirmation:$('#newUserPasswordConfirmation').val(),
 				});
 
 				//Next semester's resolutions: Burn fewer bridges. Literally.

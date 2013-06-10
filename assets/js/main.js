@@ -49,6 +49,8 @@ function paint(){
 
 var socket=io.connect('http://'+window.location.host);
 
+socket.emit('setup',{sessionKey:sessionKey});
+
 function sendChat(message,channel){
   var msg={
 	sessionKey:sessionKey,
@@ -59,6 +61,7 @@ function sendChat(message,channel){
 }
 
 function recieveChat(data){
+  //TODO: Actually do stuff with UI.
   console.log('@'+data.timestamp+'  ---  '+data.sender+' >> '+data.channel+': ' + data.message);
 }
 
