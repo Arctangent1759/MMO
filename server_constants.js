@@ -7,6 +7,7 @@ exports.constants={
 
   //Server behavior
   'session_timeout':86400000,
+  'gameRefresh':15,
 
   //Physical Constants
   'friction':.5,

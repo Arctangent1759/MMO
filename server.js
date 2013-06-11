@@ -1,9 +1,14 @@
-var constants=require('./server_constants.js').constants;
 var http = require('http');
 var url = require('url');
 var io = require('socket.io');
 var mongo = require('mongodb');
 var async = require('async');
+var CurseFilter = require('./curseFilter.js').CurseFilter;
+var constants=require('./server_constants.js').constants;
+var validate = require('./validate.js').validate;
+
+//Constants
+
 
 function start(route,handle){
 
@@ -13,35 +18,54 @@ function start(route,handle){
   //All session keys and associated clientside data. Kids, don't make your data structures this way.
   var sessions={
 	__list:{},
-	insert:function(key,email,username,persistent){
+	__EmailToKey:{},
+	__size:0,
+	insert:function(key,email,username,preferences,persistent){
 	  if (this.has(key)){
+		//Disallow key collisions
 		return false;
 	  }
-	  this.get(key);
+	  if (this.__EmailToKey[email]){
+		return this.__EmailToKey[email];
+	  }
 	  this.__list[key]={
 		last_accessed:new Date(),
 		email:email,
 		username:username,
+		preferences:preferences,
+		command:{
+		  move:[0,0],
+		  shoot:false,
+		  mouse:{
+			click:false,
+			position:[0,0],
+		  },
+		},
 		persistent:persistent,
+		sessionKey:key,
 	  };
-	  return true;
+	  this.__EmailToKey[email]=key;
+	  this.__size++;
+	  return key;
 	},
 	remove:function(key){
 	  if (!this.has(key)){
 		return false;
 	  }
+	  this.__size--;
+	  this.__EmailToKey.remove(__list[key].email);
 	  __list.remove(key);
 	  return true;
 	},
 	has:function(key){
-	  return this.hasOwnProperty(key);
+	  return this.__list.hasOwnProperty(key);
 	},
 	get:function(key){
 	  if (!this.has(key)){
 		return false;
 	  }
-	  __list[key].last_accessed=new Date();
-	  return __list[key];
+	  this.__list[key].last_accessed=new Date();
+	  return this.__list[key];
 	},
 	purge:function(){
 	  for (var i in this.__list){
@@ -51,12 +75,28 @@ function start(route,handle){
 		}
 	  }
 	},
+	size:function(){
+	  return __size;
+	},
+	each:function(callback){
+	  //Callback is in the form function(key,value)
+	  for (var i in this.__list){
+		callback(i,this.__list[i]);
+	  }
+	}
   };
+
+  var langFilter;
 
   async.series([
 
 	function printStarting(next){
 	  console.log("Server starting...");
+	  next();
+	},
+
+	function makeCurseFilter(next){
+	  langFilter = new CurseFilter();
 	  next();
 	},
 
@@ -87,39 +127,51 @@ function start(route,handle){
 		console.log("\thttp started.")
 		next();
 	  });
-	  io.listen(server).on('connection',function(socket){
+	  io.listen(server, {log:false}).on('connection',function(socket){
+
+		var isActive = false; //Records whether the current account is active. Set to true after setUp is called.
 
 		//Listen to client
 		
 		//Login
 		socket.on('login',function(data){
-		  console.log('Login recieved.');
+		  if (!validate(data,{email:'string',password:'string',persistent:'boolean'})){
+			socket.emit('loginResult',{sessionId:false,error:'Data validation failed.'});
+			console.log('Data validation failure at login.');
+			return;
+		  }
 		  userDb.findOne({email:data.email},function(err,item){
-			console.log('Database query successful.');
 			if (item && pwHash(data.password)==item.password){
 			  //Successful Login
-			  socket.emit('loginResult',{sessionId:genSessionKey(sessions,item,data.persistent)})
-			  console.log("logged on!");
+			  socket.emit('loginResult',{sessionKey:genSessionKey(sessions,item,data.persistent)})
 			}else{
 			  //Failed Login
 			  socket.emit('loginResult',{sessionId:false, error:'Incorrect password.'});
-			  console.log("Failed log on!");
 			}
 		  });
 		});
 
 		//Logout
 		socket.on('logout',function(data){
+		  if (!validate(data,{sessionKey:'string'})){
+			console.log('Data validation failure at logout.');
+			return;
+		  }
+		  //Invalidates Session
+		  sessions.remove(data.sessionKey);
 		});
 
 		//NewUser
 		socket.on('newUser',function(data){
-		  console.log("newUser recieved");
-		  console.log("Data",data);
+		  if (!validate(data,{email:'string',username:'string',password:'string',password_confirmation:'string'})){
+			socket.emit('createUserResult',{error:'Data validation failed.'});
+			console.log('Data validation failure at newUser.');
+			return;
+		  }
 		  if (!validateEmail(data.email)){
 			//Invalid email
-			socket.emit('createUserResult',{error:'Email  is invalid.'})
-		  } else if (data.password!=data.password_confirmation){
+			socket.emit('createUserResult',{error:'Email is invalid.'})
+		  }else if(data.password!=data.password_confirmation){
 			//Invalid password
 			socket.emit('createUserResult',{error:'Passwords do not match.'})
 		  }else{
@@ -137,40 +189,115 @@ function start(route,handle){
 					userDb.insert({
 					  email:data.email,
 					  username:data.username,
-					  password:pwHash(data.password)
+					  password:pwHash(data.password),
+					  preferences:{
+						languageFilter:true, //No one wants to hear about 'yolo cs70 republican beiber swag' ever again.
+					  }
 					},{safe:true},function(err,result){
 					  if (err){
-						socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});
+						socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});  //TURING LIVES!
 					  }else{
-						socket.emit('createUserResult',{error:false});
+						socket.emit('createUserResult',{error:false,successMessage:'Your account has been created. An account confirmation email has been sent to ' + data.email+'.'});
 					  }
 					});
 				  }
 				});
 		 
 			  }
-			})
+			});
+		  }
+		});
+
+		//Allows user data retrieval
+		socket.on('getUserData',function(data){
+		  if (!validate(data,{key:'string'})){
+			socket.emit('userData',{error:'Data validation failed.'});
+			console.log('Data validation failure at getUserData.');
+			return;
+		  }
+		  if (!sessions.get(data.key)){
+			socket.emit('userData',{error:'Your session has expired. Please log in again.'});
+		  }else{
+			userDb.findOne({email:sessions.get(data.key).email},function(err,item){
+			  if (err){
+				socket.emit('userData',{error:'Internal server error. Something broke. We\'re sorry.'});
+			  }else{
+				socket.emit('userData',{error:false,email:item.email,username:item.username});
+			  }
+			});
 		  }
 		});
 	
 		//Ingame Commands
 		socket.on('command',function(data){
+		  if (!validate(data,{sessionKey:'string',command:{move:['number','number'],shoot:'boolean',mouse:{click:'boolean',position:['number','number']}}})){
+			socket.emit('userData',{error:'Data validation failed.'});
+			console.log('Data validation failure at command.');
+			return;
+		  }
+		  var session = sessions.get(data.sessionKey);
+		  session.command=data.command;
+		});
+
+		socket.on('chat',function(data){
+		  if (!validate(data,{sessionKey:'string',channel:'string',message:'string'})){
+			console.log('Data validation failure at chat.');
+			return;
+		  }
+		  //Check if user is logged on.
+		  var user = sessions.get(data.sessionKey);
+		  if (user){
+			var msg={
+			  sender:user.username,
+			  channel:data.channel,
+			  message:data.message,
+			  timestamp:new Date(),
+			};
+			var filteredMsg={
+			  sender:msg.sender,
+			  channel:msg.channel,
+			  message:langFilter.filterPhrase(msg.message),
+			  timestamp:msg.timestamp,
+			}
+			sessions.each(function(sessionKey,session){
+			  if (session.socket){
+				//TODO: Add additional conditions, such as team, privacy, language filtering, etc.
+				if (session.preferences.languageFilter){
+				  session.socket.emit('chat',filteredMsg);
+				}else{
+				  session.socket.emit('chat',msg);
+				}
+			  }
+			});
+		  }
+		});
+
+		//Important: Call this before starting the game instance.
+		//Will record socket data for each session, to allow back-and-forth communication.
+		//Call on the game page, not on the login page..
+		socket.on('setup',function(data){
+		  if (!validate(data,{sessionKey:'string'})){
+			console.log('Data validation failure at setup.');
+			return;
+		  }
+		  sessions.get(data.sessionKey).socket=socket;
+		  isActive=true;
 		});
 
 
 		//Send data back to client for drawing
 		
-		/*
 		setInterval(function(){
-		  socket.emit('gameBoard',{'data goes':'here'});
-		});
-		*/
-
+		  if (isActive){
+			socket.emit('gameBoard',{'data goes':'here'});
+		  }
+		},constants.gameRefresh);
 
 	  });
 	},
-	function startPurgeProcess(){
+	function startPurgeProcess(next){
 	  setInterval(sessions.purge,60000);
+	  next();
 	},
 	function finish(){
 	  console.log("Server started.");
@@ -200,8 +327,8 @@ function genSessionKey(sessions,item,persistent){
   var key;
   do{
 	//Randomize crap! It's 3:20AM! feel free to make this work better.
-	key=((Math.random()*pwHash(item.username))+Number(new Date()))%70368760954879;
-  }while(!sessions.insert(key,item.email,item.username,persistent));
+	key=sessions.insert(pwHash(item.username+item.email).toString(16)+((Math.round(Math.random()*70368760954879)+Number(new Date()))%70368760954879).toString(16),item.email,item.username,item.preferences,persistent)
+  }while(!key);
   return key;
 }
 
