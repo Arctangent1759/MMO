@@ -46,10 +46,6 @@ function paint(){
    window.requestAnimFrame(paint);
 }
 
-
-<<<<<<< HEAD
-
-
 // begin William.update
 
 function update(name)
@@ -245,7 +241,8 @@ function intersection(object1, object2)
     return false;
   }
 }
-=======
+
+
 var socket=io.connect('http://'+window.location.host);
 
 socket.emit('setup',{sessionKey:sessionKey});
@@ -265,4 +262,3 @@ function recieveChat(data){
 }
 
 socket.on('chat',recieveChat);
->>>>>>> 8531e6b5fe21e0f6080063d8469d8939e3b963fb

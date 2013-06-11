@@ -216,9 +216,9 @@ function start(route,handle){
 			return;
 		  }
 		  if (!sessions.get(data.key)){
-			socket.emit('userData',{error:'Your session has expired. Please log in again.'});
+			socket.emit('userData',{error:'Your session has expired. Please log in again.'}); 
 		  }else{
-			userDb.findOne({email:sessions.get(data.key).email},function(err,item){
+			userDb.findOne({email:sessions.get(data.key).email},function(err,item){ //Ha. Made you look.
 			  if (err){
 				socket.emit('userData',{error:'Internal server error. Something broke. We\'re sorry.'});
 			  }else{
@@ -333,3 +333,18 @@ function genSessionKey(sessions,item,persistent){
 }
 
 exports.start=start;
+
+
+
+
+/**
+ *
+ * Here lies a toppled god.
+ * His fall was not a small one.
+ * We did but build his pedestal,
+ * A narrow and a tall one.
+ *                            --H.G. Wells
+ *
+ */
+
+
