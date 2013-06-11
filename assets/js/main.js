@@ -12,7 +12,15 @@ var sessionKey=processQueryString().sessionKey;
 
 //Global vars
 var socket=io.connect('http://'+window.location.host);
-
+var isChatting=false;
+var command={
+  keyboard:{
+  },
+  mouse:{
+	click:false,
+	position:[0,0],
+  },
+};
 
 
 window.requestAnimFrame = (function(){
@@ -48,15 +56,44 @@ function init(){
   //Set up chat socket
   setupChat();
 
-  //Create game canvas
+  //Create and style game canvas
   $("#"+CONTAINER_ID).html("<div width='100%'height='"+PADDING+"'>&nbsp</div><canvas id="+CANVAS_ID+" class=game_container width=200 height=200></canvas>");
   var cvs=document.getElementById(CANVAS_ID);
-
-  //Style canvas
   window.onresize=function(){cvs.height=window.innerHeight-PADDING;cvs.width=window.innerWidth-PADDING;};
   window.onresize();
 
   //Load resources
+  
+  //Set control eventhandlers
+  $("#"+CANVAS_ID).mousemove(function(e){
+	command.mouse.position[0] = e.clientX-this.offsetLeft-Math.floor($("#"+CANVAS_ID).width()/2);
+	command.mouse.position[1] = -(e.clientY - this.offsetTop-Math.floor($("#"+CANVAS_ID).height()/2));
+  });
+  $("#"+CANVAS_ID).mouseup(function(e){
+	command.mouse.click=false;
+  });
+  $("#"+CANVAS_ID).mousedown(function(e){
+	command.mouse.click=true;
+  });
+  $(document).keydown(function(e){
+	if (!isChatting){
+	  command.keyboard[String.fromCharCode(e.which).toLowerCase()]=true;
+	}
+  });
+  $(document).keyup(function(e){
+	if (!isChatting){
+	  command.keyboard[String.fromCharCode(e.which).toLowerCase()]=false;
+	}
+  });
+
+  //Start server control reporting process
+  socket.on('game_heartbeat',function(data){
+	socket.emit('command',{
+	  sessionKey:sessionKey,
+	  command:command,
+	})
+  });
+
 }
 
 function run(){
@@ -76,10 +113,11 @@ function paint(){
   William:
   If you're looking for your code, it's
   been moved to assets/js/filterData.js.
-  Your functions are still avaliable in 
+  Your functions are still available in 
   this namespace, as they have been  
   imported through game.html.
 
-  Delete this comment and push when you see it.
+  Delete this comment and push when you 
+  see it.
 
 */

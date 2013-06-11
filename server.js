@@ -35,8 +35,8 @@ function start(route,handle){
 		username:username,
 		preferences:preferences,
 		command:{
-		  move:[0,0],
-		  shoot:false,
+		  keyboard:{
+		  },
 		  mouse:{
 			click:false,
 			position:[0,0],
@@ -231,13 +231,14 @@ function start(route,handle){
 	
 		//Ingame Commands
 		socket.on('command',function(data){
-		  if (!validate(data,{sessionKey:'string',command:{move:['number','number'],shoot:'boolean',mouse:{click:'boolean',position:['number','number']}}})){
+		  if (!validate(data,{sessionKey:'string',command:{keyboard:{},mouse:{click:'boolean',position:['number','number']}}})){
 			socket.emit('userData',{error:'Data validation failed.'});
 			console.log('Data validation failure at command.');
 			return;
 		  }
 		  var session = sessions.get(data.sessionKey);
 		  session.command=data.command;
+		  console.log(session.command);
 		});
 
 		socket.on('chat',function(data){
@@ -281,7 +282,11 @@ function start(route,handle){
 			console.log('Data validation failure at setup.');
 			return;
 		  }
-		  sessions.get(data.sessionKey).socket=socket;
+		  var session=sessions.get(data.sessionKey);
+		  if (!session){
+			return;
+		  }
+		  session.socket=socket;
 		  isActive=true;
 		});
 
@@ -291,6 +296,13 @@ function start(route,handle){
 		setInterval(function(){
 		  if (isActive){
 			socket.emit('gameBoard',{'data goes':'here'});
+		  }
+		},constants.gameRefresh);
+
+		//Get data from client
+		setInterval(function(){
+		  if (isActive){
+			socket.emit('game_heartbeat',{});
 		  }
 		},constants.gameRefresh);
 
