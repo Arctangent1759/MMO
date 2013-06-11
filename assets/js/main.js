@@ -155,14 +155,13 @@ function filterSight(playerInLoop, playerClient) // canvas width and height can 
   {
     return false;
   }
-  if (
-    distance(distanceX, distanceY) < (6/5 * canvas.height) && // circle definition, increased for aesthetics, later limited
-    slope > viewAngle(playerClient) && // arc specification, should be a fraction such as 1/4
-    slope < -viewAngle(playerClient) &&
-    distanceX < ((canvas.width / 2) + 25) && // right asymptote, 25 pixels for buffer in case object edges are in range
-    distanceX > (-(canvas.width) / 2) - 25) && // left asymptote
-    distanceY < (canvas.height + 25) && // top asymptote
-    distanceY > -25 // bottom asymptote
+  if (distance(distanceX, distanceY) < ((6.0/5.0) * (canvas.height)) //circle definition, increased for aesthetics, later limited
+    && (slope > viewAngle(playerClient)) // arc specification, should be a fraction such as 1/4
+    && (slope < -viewAngle(playerClient))
+    && (distanceX < ((canvas.width / 2) + 25))// right asymptote, 25 pixels for buffer in case object edges are in range
+    && (distanceX > (-(canvas.width) / 2) - 25)// left asymptote
+    && (distanceY < (canvas.height + 25)) // top asymptote
+    && (distanceY > -25) // bottom asymptote
     )
   {
     return true;
@@ -232,7 +231,7 @@ function sumScreen(object1, object2)
 
 function intersection(object1, object2)
 {
-  if (object1.area + object2.area) > sumScreen(object1, object2)
+  if ((object1.area + object2.area) > sumScreen(object1, object2))
   {
     return true;
   }
