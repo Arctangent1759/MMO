@@ -32,6 +32,12 @@ Modules
 + Physics
   + game.js: gameLoop()
 
+
+Le Game
+-------
++ persistent world, race v. race
+
+
 Assignments
 -----------
 + Alex: User Input (serverside)

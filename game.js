@@ -1,5 +1,5 @@
 var b2d = require('box2d');
-function gameLoop(){
+function gameLoop(sessions){
   // Define world
   var worldAABB = new b2d.b2AABB();
   worldAABB.lowerBound.Set(-100.0, -100.0);
@@ -28,12 +28,13 @@ function gameLoop(){
 
   var iterations = 10;
 
-  for (var i=0; i < 60; i++) {
-	world.Step(timeStep, iterations);
-	var position = body.GetPosition();
-	var angle = body.GetAngle();
-	//console.log(i+": <"+position.x+", "+position.y+"> @"+angle);
-  }
+  sessions.each(function(item){
+     // TODO: update locations/velocities of all bodies  
+     // create reference to new position
+     
+  });
+  // pass body list to clientside for drawing
+
 }
 
 
