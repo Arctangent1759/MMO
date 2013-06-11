@@ -102,22 +102,3 @@ function run(){
 function paint(){
    window.requestAnimFrame(paint);
 }
-
-
-
-
-
-
-/*
- *
-  William:
-  If you're looking for your code, it's
-  been moved to assets/js/filterData.js.
-  Your functions are still available in 
-  this namespace, as they have been  
-  imported through game.html.
-
-  Delete this comment and push when you 
-  see it.
-
-*/
