@@ -1,7 +1,7 @@
 william.update
 
 inputs:
-- all objects in the current frame from server
+- all objects in the current frame from server (in name value pairs, possibly functions)
 	- player info (ex. view angle of all players)
 	- map info (ex. changes in environment)
 	- chat info, stats menu, timer
