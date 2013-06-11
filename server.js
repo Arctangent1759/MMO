@@ -6,6 +6,7 @@ var async = require('async');
 var CurseFilter = require('./curseFilter.js').CurseFilter;
 var constants=require('./server_constants.js').constants;
 var validate = require('./validate.js').validate;
+var gameLoop = require('./game.js').gameLoop;
 
 //Constants
 
@@ -297,6 +298,10 @@ function start(route,handle){
 	},
 	function startPurgeProcess(next){
 	  setInterval(sessions.purge,60000);
+	  next();
+	},
+	function startGameLoop(next){
+	  setInterval(function(){gameLoop(sessions);},15);
 	  next();
 	},
 	function finish(){
