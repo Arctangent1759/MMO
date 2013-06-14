@@ -91,23 +91,24 @@ function display(objectArray) // input the filtered object array, not the indivi
 
 function distance(integer1, integer2)
 {
-  return Math.sqrt((integer1 * integer) + (integer2 * integer2));
+  return Math.sqrt((integer1 * integer1) + (integer2 * integer2));
 }
 
 
-function filterSight(playerInLoop, playerClient) // canvas width and height can be exchanged to screen width and height upon full screen
+function filterSight(objectInLoop, mapObject, playerClient) // canvas width and height can be exchanged to screen width and height upon full screen
 {
   var canvas = document.getElementById("canvasId");
-  var distanceX = playerInLoop.xPosition - playerClient.xPosition;
-  var distanceY = Math.abs(playerInLoop.yPosition - playerClient.yPosition); // the screen origin starts at the upper left hand corner
-  var slope = distanceY / distanceX; // cotangent of angle in degrees is the slope of y/x
-  if (withinFog() || withinBlind())
+  var distanceX = objectInLoop.xPosition - playerClient.xPosition;
+  var distanceY = -(objectInLoop.yPosition - playerClient.yPosition); // the screen origin starts at the upper left hand corner
+  // var slope = distanceY / distanceX; // taken out for the time being because of dividing by 0 error
+  var angle = Math.atan2(distanceY, distanceX); // tangent(theta) = y / x, so angle theta == arctangent(slope)
+  if (withinFog() || withinBlind(objectInLoop, mapObject, playerClient))
   {
     return false;
   }
   if (distance(distanceX, distanceY) < ((6.0/5.0) * (canvas.height)) //circle definition, increased for aesthetics, later limited
-    && (slope > viewAngle(playerClient)) // arc specification, should be a fraction such as 1/4
-    && (slope < -viewAngle(playerClient))
+    && (angle > viewAngle(playerClient)) // arc specification, should be a radian measure
+    && (angle < (Math.PI - viewAngle(playerClient)))
     && (distanceX < ((canvas.width / 2) + 25))// right asymptote, 25 pixels for buffer in case object edges are in range
     && (distanceX > (-(canvas.width) / 2) - 25)// left asymptote
     && (distanceY < (canvas.height + 25)) // top asymptote
@@ -123,41 +124,158 @@ function filterSight(playerInLoop, playerClient) // canvas width and height can 
 }
 
 
-function withinFog(playerInLoop, playerClient)
+function withinFog(objectInLoop, playerClient)
 {
   // to be done
 }
 
 
-function withinBlind(playerInLoop, playerClient)
+function withinBlind(objectInLoop, mapObject, playerClient) // where objectInLoop is any player or projectile object (but not mapObject)
 {
-  // to be done
+  var filteredResult = filterCorners(mapObject, playerClient);
+  var maxRight = filteredResult.maxRight;
+  var maxLeft = filteredResult.maxLeft;
+  var distanceXRight = maxRight.xPosition - playerClient.xPosition;
+  var distanceYRight = maxRight.yPosition - playerClient.yPosition;
+  var angleMaxRight = Math.atan2(distanceYRight, distanceXRight);
+  var distanceXLeft = maxLeft.xPosition - playerClient.xPosition;
+  var distanceYLeft = maxLeft.yPosition - playerClient.yPosition;
+  var angleMaxLeft = Math.atan2(distanceYRight, distanceXRight);
+  var objectPlayerAngle = Math.atan2((objectInLoop.yPosition - playerClient.yPosition), (objectInLoop.xPosition - playerClient.xPosition));
+  if (objectPlayerAngle > angleMaxLeft && objectPlayerAngle < angleMaxRight && isOutside(maxLeft, maxRight, objectInLoop))
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
 }
 
 
-function viewAngle(playerClient)
+function convertAngleTo(angle, angleType)
+{
+  if (angleType == "degrees")
+  {
+    return angle * 180 / Math.PI;
+  }
+  if (angleType == "radians")
+  {
+    return angle * Math.PI / 180;
+  }
+}
+
+
+function logBaseTwo(integer) // thought needed to use, actually didn't, oops
+{
+  var number = integer;
+  index = 0;
+  while (number > 1)
+  {
+    number = number / 2;
+    index = index + 1;
+  }
+  return index;
+}
+
+
+function viewAngle(playerClient) // data structure (naming, particularly playerClient.mouseRight and playerClient.weapon.zoom) needs fixing
 {
   if (playerClient.mouseRight == true) // player.weapon.zoom has to be in 1x, 2x, 4x, 8x, 16x
   {
     if (playerClient.weapon.zoom == 1)
     {
-      return 0.25;
+      return convertAngleTo(15, "radians");
     }
     else
     {
-      return (playerClient.weapon.zoom / 2);
+      return (Math.PI / 2) - (2 * Math.atan(1 / playerClient.weapon.zoom)); // to test, do (pi/2 - 2*arctan(1/2)) * 180/pi on wolfram to get degree representation
     }
   }
 }
 
 
-function filterActive(playerInLoop)
+
+function filterActive(objectInLoop)
 {
-  if (playerInLoop.active == true)
+  if (objectInLoop.active == true)
   {
     return true;
   }
 }
+
+
+function filterCorners(mapObject, playerClient) // mapObject.corners[] should be adjusted to be actual x/y coordinates of the corners of the mapObject, relative to the map origin and not mapObject.originX/Y, use find and replace in separate txt file for name changes
+{
+  var distanceXAlpha = mapObject.corners[0].xPosition - playerClient.xPosition;
+  var distanceYAlpha = mapObject.corners[0].yPosition - playerClient.yPosition;
+  var distanceXBeta = mapObject.corners[1].xPosition - playerClient.xPosition;
+  var distanceYBeta = mapObject.corners[1].yPosition - playerClient.yPosition;
+  var angleAlpha = Math.atan2(distanceYAlpha, distanceXAlpha);
+  var angleBeta = Math.atan2(distanceYBeta, distanceXBeta);
+  var filteredResult;
+  if (angleAlpha < angleBeta)
+  {
+    filteredResult = {"maxRight": mapObject.corners[0], "maxLeft": mapObject.corners[1]};
+  }
+  else
+  {
+    filteredResult = {"maxRight": mapObject.corners[1], "maxLeft": mapObject.corners[0]};
+  }
+  for (index = 2; index < mapObject.corners.length; index = index + 1) // tricky thing with Math.atan2() is that it returns 0 to PI in the top hemisphere, and -PI to 0 in the bottom hemisphere; good thing other filters already take out any objects in the lower quadrants
+  {
+    var distanceXGamma = mapObject.corners[index].xPosition - playerClient.xPosition;
+    var distanceYGamma = mapObject.corners[index].yPosition - playerClient.yPosition;
+    var angleGamma = Math.atan2(distanceYGamma, distanceXGamma);
+    if (angleGamma < Math.atan2(filteredResult.maxRight.yPosition - playerClient.yPosition, filteredResult.maxRight.xPosition - playerClient.xPosition))
+    {
+      filteredResult.maxRight = mapObject.corners[index];
+    }
+    if (angleGamma > Math.atan2(filteredResult.maxLeft.yPosition - playerClient.yPosition, filteredResult.maxLeft.xPosition - playerClient.xPosition))
+    {
+      filteredResult.maxLeft = mapObject.corners[index];
+    }
+  }
+  return filteredResult; // return an object with properties maxRight and maxLeft
+}
+
+
+function slope(pointA, pointB)
+{
+  return (pointB.yPosition - pointA.yPosition) / (pointB.xPosition - pointA.xPosition); // how to fix denominator problem; update: fixed, use angle instead of slope
+}
+
+
+function isLeft(pointA, pointB, pointC) // source http://stackoverflow.com/questions/3461453/determine-which-side-of-a-line-a-point-lies
+{
+  return ((pointB.xPosition - pointA.xPosition) * (pointC.yPosition - pointA.yPosition) - (pointB.yPosition - pointA.yPosition) * (pointC.xPosition - pointA.xPosition)) > 0;
+}
+
+
+function isOutside(pointA, pointB, objectInLoop)
+{
+  var bool = isLeft(pointA, pointB, objectInLoop)
+  var objectPlayerAngle = Math.atan2((objectInLoop.yPosition - playerClient.yPosition), (objectInLoop.xPosition - playerClient.xPosition));
+  if (objectPlayerAngle > (Math.PI / 2))
+  {
+    if (bool == true)
+    {
+      return true;
+    }
+  }
+  if ((objectPlayerAngle < (Math.PI / 2)) && (objectPlayerAngle > 0))
+  {
+    if (bool == true)
+    {
+      return true;
+    }
+  }
+  else
+  {
+    return false;
+  }
+}
+
 
 // *
 // *
@@ -165,6 +283,9 @@ function filterActive(playerInLoop)
 // *
 // *
 
+
+
+// IGNORE BELOW, ITS JUST THEORYCRAFTING
 // sum of areas check
 // perimeter arrays cross analysis check
 // max edge estimation check
