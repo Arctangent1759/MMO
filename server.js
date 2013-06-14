@@ -42,6 +42,12 @@ function start(route,handle){
 			position:[0,0],
 		  },
 		},
+		playerObj:{  //TODO: Physics code should replace this with a digest of the player's player object.
+		  username:username,
+		  x:false,
+		  y:false,
+		  bullets:[],
+		},
 		persistent:persistent,
 		sessionKey:key,
 	  };
@@ -238,7 +244,6 @@ function start(route,handle){
 		  }
 		  var session = sessions.get(data.sessionKey);
 		  session.command=data.command;
-		  console.log(session.command);
 		});
 
 		socket.on('chat',function(data){
@@ -293,17 +298,52 @@ function start(route,handle){
 
 		//Send data back to client for drawing
 		
-		setInterval(function(){
-		  if (isActive){
-			socket.emit('gameBoard',{'data goes':'here'});
+		socket.on('getGameBoard',function(data){
+		  if (!validate(data,{sessionKey:'string'})){
+			console.log('Data validation failure at getGameBoard.');
+			return;
 		  }
-		},constants.gameRefresh);
+		  if (isActive){
+			var players = [];
+			sessions.each(function(key,value){
+			  if (typeof(value.playerObj.x)=='number' && typeof(value.playerObj.y)=='number'){
+				players.push(value.playerObj);
+			  }
+			});
+			socket.emit('gameBoard', {
+			  players:players,
+			  playerData:{
+				playerObj:sessions.get(data.sessionKey).playerObj,
+				username:sessions.get(data.sessionKey).username,
+			  },
+			});
+		  }
+		});
 
-		//Get data from client
+		//Set game heartbeat to constants.gameRefresh
 		setInterval(function(){
 		  if (isActive){
 			socket.emit('game_heartbeat',{});
 		  }
+		  sessions.each(function(key,value){
+			console.log(value.playerObj);
+			if (typeof(value.playerObj.x)!='number' || typeof(value.playerObj.y)!='number'){
+			  value.playerObj.x=0;
+			  value.playerObj.y=0;
+			}
+			if (value.command.keyboard['w']){
+			  value.playerObj.y+=1;
+			}
+			if (value.command.keyboard['a']){
+			  value.playerObj.x-=1;
+			}
+			if (value.command.keyboard['s']){
+			  value.playerObj.y-=1;
+			}
+			if (value.command.keyboard['d']){
+			  value.playerObj.x+=1;
+			}
+		  });
 		},constants.gameRefresh);
 
 	  });

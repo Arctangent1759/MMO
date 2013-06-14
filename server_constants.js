@@ -6,7 +6,7 @@ exports.constants={
   'db_port':27017,
 
   //Server behavior
-  'session_timeout':86400000,
+  'session_timeout':10000,
   'gameRefresh':15,
 
   //Physical Constants

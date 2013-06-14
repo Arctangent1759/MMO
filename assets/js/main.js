@@ -22,6 +22,11 @@ var command={
   },
 };
 
+//Local gameboard
+var players = false;
+var bullets = false;
+var playerData = false;
+
 
 window.requestAnimFrame = (function(){
   return (
@@ -45,7 +50,7 @@ window.requestAnimFrame = (function(){
 $(document).ready(function(){
   init();
   setInterval(run,16);
-  paint();
+  paint(new Graphics(document.getElementById(CANVAS_ID),document.getElementById(CANVAS_ID).getContext('2d')));
 });
 
 function init(){
@@ -91,14 +96,77 @@ function init(){
 	socket.emit('command',{
 	  sessionKey:sessionKey,
 	  command:command,
-	})
+	});
+	socket.emit('getGameBoard',{
+	  sessionKey:sessionKey,
+	});
   });
 
+  //Start listening for players data
+  socket.on('gameBoard',function(data){
+	players=data.players;
+	playerData=data.playerData;
+  });
 }
 
 function run(){
 }
 
-function paint(){
-   window.requestAnimFrame(paint);
+
+function paint(graphics){
+  //Debug graphics.
+  
+  if (playerData && players /* && bullets TODO: uncomment */){
+	
+	//Clear the screen before drawing things
+	graphics.clearScreen('black');
+
+	//Draw player
+	graphics.circle(0,0,Math.PI/2,15,'white','blue');
+
+	//Draw everybody else
+	for (var i = 0; i < players.length; i++){
+	  if (players[i].username!=playerData.username){
+		graphics.circle(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,Math.PI/2,15,'white','red');
+	  }
+	  graphics.string(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,'white',players[i].username);
+	}
+	
+	//Set callback for next frame
+  }
+  window.requestAnimFrame(function(){paint(graphics);});
+}
+
+//Debug graphics abstraction
+
+function Graphics(cvs,ctx){
+  this.cvs=cvs;
+  this.ctx=ctx;
+  this.circle=function(x,y,angle,radius,lineColor,fillColor){
+	this.ctx.beginPath();
+	this.ctx.arc(this.cvs.width/2+x,this.cvs.height/2-y,radius,0,2*Math.PI,false);
+	this.ctx.strokeStyle=lineColor;
+	this.ctx.fillStyle=fillColor
+	this.ctx.lineWidth=1;
+	this.ctx.stroke();
+	this.ctx.fill();
+  }
+  this.rect=function(x,y,angle,width,height,lineColor,fillColor){
+	this.ctx.save();
+	this.ctx.translate(this.cvs.width/2+x,this.cvs.height/2-y);
+	this.ctx.rotate(angle);
+	this.ctx.fillStyle=fillColor;
+	this.ctx.strokeStyle=lineColor;
+	this.ctx.fillRect(-width/2,-height/2,width,height);
+	this.ctx.strokeRect(-width/2,-height/2,width,height);
+	this.ctx.restore();
+  }
+  this.string=function(x,y,lineColor,s){
+	this.ctx.strokeStyle=lineColor;
+	this.ctx.strokeText(s,this.cvs.width/2+x,this.cvs.height/2-y);
+  }
+  this.clearScreen=function(color){
+	this.ctx.fillStyle=color;
+	this.ctx.fillRect(0,0,cvs.width,cvs.height);
+  }
 }
