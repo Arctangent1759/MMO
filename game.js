@@ -1,41 +1,49 @@
 var b2d = require('box2d');
-function gameLoop(sessions){
-  // Define world
-  var worldAABB = new b2d.b2AABB();
-  worldAABB.lowerBound.Set(-100.0, -100.0);
-  worldAABB.upperBound.Set(100.0, 100.0);
+var constants = require('/server_constants.js').constants;
 
-  var gravity = new b2d.b2Vec2(0.0, 0.0);
-  var doSleep = true;
+function physics(sessions){
 
-  var world = new b2d.b2World(worldAABB, gravity, doSleep);
+  setInterval(function(){
+    // call functions and stuff here    
+    step(sessions);
+  },constants.game_heartbeat)
 
-  // Dynamic Body
-  var bodyDef = new b2d.b2BodyDef();
-  bodyDef.position.Set(0.0, 4.0);
+  this.addPlayer = function(sessionKey){
+    //add a new player by summoning a great moose from the marianas trench    
+    //create bodydef
+  }
 
-  var body = world.CreateBody(bodyDef);
+  this.removePlayer = function(sessionKey(){
+    //remove player and session key
+    //nuke that sucka
+  }
 
-  var shapeDef = new b2d.b2PolygonDef();
-  shapeDef.SetAsBox(1.0, 1.0);
-  shapeDef.density = 1.0;
-  shapeDef.friction = 0.3;
-  body.CreateShape(shapeDef);
-  body.SetMassFromShapes();
+  this.step = function(sessions){
+    if (isActive){
+      socket.emit('game_heartbeat',{});
+    }
+    sessions.each(function(key,value){
+      console.log(value.playerObj);
+      if (typeof(value.playerObj.x)!='number' || typeof(value.playerObj.y)!='number'){
+        value.playerObj.x=0;
+        value.playerObj.y=0;
+      }
+      if (value.command.keyboard['w']){
+        value.playerObj.y+=1;
+      }
+      if (value.command.keyboard['a']){
+        value.playerObj.x-=1;
+      }
+      if (value.command.keyboard['s']){
+        value.playerObj.y-=1;
+      }
+      if (value.command.keyboard['d']){
+        value.playerObj.x+=1;
+      }
+    });
+  }
 
-  // Run Simulation!
-  var timeStep = 1.0 / 60.0;
-
-  var iterations = 10;
-
-  sessions.each(function(item){
-     // TODO: update locations/velocities of all bodies  
-     // create reference to new position
-     
-  });
-  // pass body list to clientside for drawing
 
 }
 
-
-exports.gameLoop=gameLoop;
+exports.physics=physics;
