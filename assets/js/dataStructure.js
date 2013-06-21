@@ -1,8 +1,21 @@
 // FOR LOCAL WEAPONOBJECT
-function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile, weight, magazineSize, magazineMax, firingRate, firingModes, firingAccuracy, recoilHip, recoilScope, recoilMove, reloadTime)
+function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile, weight, magazineSize, magazineMax, firingRate, firingModes, recoilHip, recoilScope, recoilMove, reloadTime)
+////////////////////////////////////////////
+//                                        //
+//  Inputs (Ordered)                      //
+//  objectName, spriteLink                //
+//  xOrigin, yOrigin, projectile, weight  //
+//  magazineSize, magazineMax             //
+//  firingRate, firingModes               //
+//  recoilHip, recoilScope, recoilMove    //
+//  reloadTime                            //
+//                                        //
+////////////////////////////////////////////
 {
     this.objectName = objectName;
     this.spriteLink = spriteLink;
+    this.xOrigin = xOrigin;
+    this.yOrigin = yOrigin;
     this.projectile = projectile;
     this.weight = weight;
     this.collision = function(networkPlayerObject)
@@ -15,7 +28,6 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
 
     this.firingRate = firingRate;
     this.firingModes = firingModes;
-    this.firingAccuracy = firingAccuracy;
     this.fire = function(variablePlayerObject, networkPlayerObject) // where networkPlayerObject is an element of the array playerObject[] for network
     {
         var arrayIndex = networkPlayerObject.projectile.length;
@@ -52,7 +64,6 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
     this.recoilHip = recoilHip; // in radians, such as 0.04
     this.recoilScope = recoilScope; // such as 0.025
     this.recoilMove = recoilMove;
-
     this.recoilFunction = function(variablePlayerObject, networkPlayerObject)
     {
         var defaultRecoil;
@@ -126,6 +137,31 @@ Note the spacing; 4 line breaks between the sets of arrays, 1 between the indivi
 
 
 /*
+FORMATTING OF ALL DATA
+gameData
+    .networkObject
+        .playerArray[] // array of objects, each of which contains the following and a weapon property that is simply a reference to gameData.localObject.weaponObject
+            .projectileArray[]
+        .mapArray[] // might not include if map won't change
+        .serverArray[]
+    .variableObject
+        .playerArray[] // array of objects, each of which contains the following
+            .weaponObject // contains a projectile property that is simply a reference to gameData.localObject.projectileObject
+                .projectileObject
+        .mapArray[] // array of map objects, each of which has several instances of each kind of object
+            .mapObject // has objectName, xPosition, yPosition
+    .localObject
+        .playerObject
+        .weaponObject
+        .equipmentObject
+        .projectileObject
+        .mapObject
+*/
+
+
+
+
+/*
 NETWORK ARRAY
 // data constantly sent over network
 
@@ -135,12 +171,14 @@ playerObject
     .yPosition
     .angle
     .health
+    .weapon
 
     .kills
     .deaths
     .ping
     
-    .projectile
+    .weapon // name of weapon
+    .projectileArray[]
         .objectName // update061713: changed name from "name" to "objectName" because "name" is already a keyword
         .xPosition[]
         .yPosition[]
@@ -166,7 +204,8 @@ playerObject[0] ==
   "yPosition": 169,
   "angle": 0,
   "health": 69,
-  "projectile":
+  "weapon": "gun",
+  "projectileArray":
   [
     {
       "objectName": "bullet",
@@ -208,16 +247,26 @@ playerObject
     .move // bool, true if player position is different from last frame
     .clickTime // time since mouseleftclick up, use http://stackoverflow.com/questions/6472707/how-to-get-info-on-what-key-was-pressed-on-for-how-long
 
+    .weapon // array of weapon objects, as listed below
+
 weaponObject
     .objectName // update061713: changed name from "name" to "objectName" because "name" is already a keyword
 
     .magazineCurrent
     .magazineCount
     
-    .zoom // right click event
+    .zoom // current zoom (does not matter if right click is pressed, some other maths function will manipulate this property)
+    
+    .projectile // name of local projectile object
 
 projectileObject
     .objectName // update061713: changed name from "name" to "objectName" because "name" is already a keyword
+
+mapObject // each array of mapObjects is a map
+    .objectName
+
+    .xPosition
+    .yPosition
 */
 
 
@@ -254,9 +303,8 @@ weaponObject
     
     .fire() // create a new projectileObject
     .firingRate // in rounds per second
-    .firingModes // single == 1, burst == 2, automatic == 4, firingMode represents sum, so 1 == single, 2 == burst, 3 == single + burst, 4 == automatic, 5 == single + automatic, 6 == burst + automatic, 7 == all modes available
-    .firingAccuracy // default accuracy, adjusted by recoil over time
-    
+    .firingModes // single == 1, burst == 2, automatic == 4, firingMode represents sum, so 1 == single, 2 == burst, 3 == single + burst, 4 == automatic, 5 == single + automatic, 6 == burst + automatic, 7 == all modes available    
+ 
     .recoilFunction() // logarithmic function of time, approaching limit of inaccuracy
     .recoilHip // max angle value in radians that the projectile will be inaccurate to
     .recoilScope
