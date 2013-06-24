@@ -1,10 +1,163 @@
+// CIRCLE EXAMPLE OF CORNERS
+function addCorner(cornerArray, xPosition, yPosition)
+{
+  var index = cornerArray.length
+  cornerArray[index] = {"xPosition": xPosition, "yPosition": yPosition};
+}
+
+
+function floorTowardsZero(position) // to make so rounding isn't one sided
+{
+  var flooredPosition = position;
+  if (flooredPosition < 0)
+  {
+    flooredPosition = -(Math.floor(-flooredPosition));
+  }
+  else
+  {
+    flooredPosition = Math.floor(flooredPosition);
+  }
+  return flooredPosition;
+}
+
+
+function createCircle(radius)
+{
+  var cornerArray = new Array();
+  var xPosition;
+  var yPosition;
+  for (index = 360; index > 0; index = index - 1) // for finer edges or larger circles, increase
+  {
+    xPosition = radius * Math.cos(index * (Math.PI / 180));
+    yPosition = radius * Math.sin(index * (Math.PI / 180));
+    xPosition = floorTowardsZero(xPosition);
+    yPosition = floorTowardsZero(yPosition);
+    addCorner(cornerArray, xPosition, yPosition);
+  }
+  return cornerArray;
+}
+
+
+function shiftCorners(cornerArray, distanceX, distanceY) // shift from origin at 0, 0 to top-left corner, whilst inverting the y axis
+{
+  var shiftedArray = cornerArray;
+  for (index = cornerArray.length; index > 0; index = index - 1)
+  {
+    shiftedArray[index - 1].xPosition = shiftedArray[index - 1].xPosition + distanceX;
+    shiftedArray[index - 1].yPosition = -(shiftedArray[index - 1].yPosition - distanceY);
+  }
+  return shiftedArray;
+}
+
+
+function drawShape(cornerArray, imageData, red, green, blue, alpha)
+{
+  for (index = 0; index < cornerArray.length; index = index + 1)
+  {
+    var pixelIndex = cornerArray[index].xPosition + ((cornerArray[index].yPosition - 1) * 100);
+    imageData.data[4 * pixelIndex + 0] = red;
+    imageData.data[4 * pixelIndex + 1] = green;
+    imageData.data[4 * pixelIndex + 2] = blue;
+    imageData.data[4 * pixelIndex + 3] = alpha;
+  }
+}
+
+
+// to actually display
+var Circle = new createCircle(50);
+var shiftedCircle = shiftCorners(Circle, 50, 50);
+
+var canvas = document.getElementById("canvasID");
+var ctx = canvas.getContext("2d");
+var imgData = ctx.createImageData(100, 100);
+
+drawShape(shiftedCircle, imgData, 255, 0, 0, 255);
+ctx.putImageData(imgData, 10, 10);
+
+
+
+
+
+
+
+
+
+
+// FOR LOCAL PROJECTILEOBJECT
+function createProjectileObject(objectName, spriteLink, xOrigin, yOrigin, mass, corners, damage, velocity, deceleration, maxRange, explosiveRadius, explosiveTimer)
+////////////////////////////////////////////////
+//                                            //
+//  Inputs (Ordered)                          //
+//  objectName, spriteLink                    //
+//  xOrigin, yOrigin, mass                    //
+//  corners
+//  damage, velocity, deceleration, maxRange  //
+//  explosiveRadius, explosiveTimer           //
+//                                            //
+////////////////////////////////////////////////
+{
+    this.objectName = objectName;
+    this.spriteLink = spriteLink;
+    this.xOrigin = xOrigin;
+    this.yOrigin = yOrigin;
+    this.mass = mass;
+
+    this.corners = corners;
+    this.extension = function() // how to get function to run only once and put return value in variable?
+    {
+        var longestRadius = 0;
+        for (index0 = this.corners.length; index0 > 0; index0 = index0 - 1)
+        {
+            if (longestRadius < distance(this.corners[index0].xPosition, this.corners[index0].yPosition))
+            {
+                longestRadius = distance(this.corners[index0].xPosition, this.corners[index0].yPosition);
+            }
+        }
+        return longestRadius;
+    }
+    this.collision = function(networkObject1, networkObject2, localObject2) // localObject1 is this
+    {
+        var extensionThis = this.extension();
+        var extensionThat = localObject2.extension();
+        if (extensionThis + extensionThat > distance(networkObject1.xPosition + networkObject2.xPosition, networkObject1.yPosition + networkObject2.yPosition)) // checking if the objects are even close enough to consider collision
+        {
+            return false;
+        }
+        for (index1 = localObject2.corners.length; index1 > 0; index1 = index1 - 1)
+        {
+            for (index2 = this.corners.length; index2 > 0; index2 = index2 - 1)
+            {
+                if ((networkObject2.xPosition + localObject2.corners[index1].xPosition = networkObject1.xPosition + this.corners[index2].yPosition)
+                && (networkObject2.yPosition + localObject2.corners[index1].yPosition = networkObject1.xPosition + this.corners[index2].yPosition)) // check if the corners of network objects are equal to each other
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    this.damage = damage;
+    this.velocity = velocity;
+    this.deceleration = deceleration;
+    this.maxRange = maxRange;
+
+    this.explosiveRadius = explosiveRadius;
+    this.explosiveTimer = explosiveTimer;
+}
+
+
+
+
+
 // FOR LOCAL WEAPONOBJECT
-function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile, weight, magazineSize, magazineMax, firingRate, firingModes, recoilHip, recoilScope, recoilMove, reloadTime)
+function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile, weight, corners, magazineSize, magazineMax, firingRate, firingModes, recoilHip, recoilScope, recoilMove, reloadTime)
 ////////////////////////////////////////////
 //                                        //
 //  Inputs (Ordered)                      //
 //  objectName, spriteLink                //
 //  xOrigin, yOrigin, projectile, weight  //
+//  corners                               //
 //  magazineSize, magazineMax             //
 //  firingRate, firingModes               //
 //  recoilHip, recoilScope, recoilMove    //
@@ -18,7 +171,21 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
     this.yOrigin = yOrigin;
     this.projectile = projectile;
     this.weight = weight;
-    this.collision = function(networkPlayerObject)
+
+    this.corners = corners;
+    this.extension = function() // how to get function to run only once and put return value in variable?
+    {
+        var longestRadius = 0;
+        for (index0 = this.corners.length; index0 > 0; index0 = index0 - 1)
+        {
+            if (longestRadius < distance(this.corners[index0].xPosition, this.corners[index0].yPosition))
+            {
+                longestRadius = distance(this.corners[index0].xPosition, this.corners[index0].yPosition);
+            }
+        }
+        return longestRadius;
+    }    
+    this.collision = function(gameData, playerName)
     {
         // box2d writes this?
     }
@@ -28,8 +195,10 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
 
     this.firingRate = firingRate;
     this.firingModes = firingModes;
-    this.fire = function(variablePlayerObject, networkPlayerObject) // where networkPlayerObject is an element of the array playerObject[] for network
+    this.fire = function(gameData, playerName) // where networkPlayerObject is an element of the array playerObject[] for network
     {
+        var networkPlayerObject = getObject(gameData.networkObject.playerArray, "objectName", playerName);
+        var variablePlayerObject = getObject(gameData.variableObject.playerArray, "objectName", playerName);
         var arrayIndex = networkPlayerObject.projectile.length;
         var projectileObject;
         while (arrayIndex > 0)
@@ -64,8 +233,10 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
     this.recoilHip = recoilHip; // in radians, such as 0.04
     this.recoilScope = recoilScope; // such as 0.025
     this.recoilMove = recoilMove;
-    this.recoilFunction = function(variablePlayerObject, networkPlayerObject)
+    this.recoilFunction = function(gameData, playerName)
     {
+        var networkPlayerObject = getObject(gameData.networkObject.playerArray, "objectName", playerName);
+        var variablePlayerObject = getObject(gameData.variableObject.playerArray, "objectName", playerName);
         var defaultRecoil;
         var moveAdjust;
         var timeAdjust;
@@ -98,8 +269,9 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
     }
 
     this.reloadTime = reloadTime;
-    this.reloadWeapon = function(variablePlayerObject) // where variablePlayerObject is an element of the array playerObject[] for client variables
+    this.reloadWeapon = function(gameData, playerName) // where variablePlayerObject is an element of the array playerObject[] for client variables
     {
+        var variablePlayerObject = getObject(gameData.variableObject.playerArray, "objectName", playerName);
         if ((variablePlayerObject.magazineCurrent < this.magazineSize) && (variablePlayerObject.magazineCount > 0))
         {
             setTimeout(function()
