@@ -1,77 +1,77 @@
 // CIRCLE EXAMPLE OF CORNERS
 function addCorner(cornerArray, xPosition, yPosition)
 {
-  var index = cornerArray.length
-  cornerArray[index] = {"xPosition": xPosition, "yPosition": yPosition};
+    var index = cornerArray.length
+    cornerArray[index] = {"xPosition": xPosition, "yPosition": yPosition};
 }
 
 
 function floorTowardsZero(position) // to make so rounding isn't one sided
 {
-  var flooredPosition = position;
-  if (flooredPosition < 0)
-  {
-    flooredPosition = -(Math.floor(-flooredPosition));
-  }
-  else
-  {
-    flooredPosition = Math.floor(flooredPosition);
-  }
-  return flooredPosition;
+    var flooredPosition = position;
+    if (flooredPosition < 0)
+    {
+        flooredPosition = -(Math.floor(-flooredPosition));
+    }
+    else
+    {
+        flooredPosition = Math.floor(flooredPosition);
+    }
+    return flooredPosition;
 }
 
 
 function createCircle(radius)
 {
-  var cornerArray = new Array();
-  var xPosition;
-  var yPosition;
-  for (index = 360; index > 0; index = index - 1) // for finer edges or larger circles, increase
-  {
-    xPosition = radius * Math.cos(index * (Math.PI / 180));
-    yPosition = radius * Math.sin(index * (Math.PI / 180));
-    xPosition = floorTowardsZero(xPosition);
-    yPosition = floorTowardsZero(yPosition);
-    addCorner(cornerArray, xPosition, yPosition);
-  }
-  return cornerArray;
+    var cornerArray = new Array();
+    var xPosition;
+    var yPosition;
+    for (index = 360; index > 0; index = index - 1) // for finer edges or larger circles, increase
+    {
+        xPosition = radius * Math.cos(index * (Math.PI / 180));
+        yPosition = radius * Math.sin(index * (Math.PI / 180));
+        xPosition = floorTowardsZero(xPosition);
+        yPosition = floorTowardsZero(yPosition);
+        addCorner(cornerArray, xPosition, yPosition);
+    }
+    return cornerArray;
 }
 
 
 function shiftCorners(cornerArray, distanceX, distanceY) // shift from origin at 0, 0 to top-left corner, whilst inverting the y axis
 {
-  var shiftedArray = cornerArray;
-  for (index = cornerArray.length; index > 0; index = index - 1)
-  {
-    shiftedArray[index - 1].xPosition = shiftedArray[index - 1].xPosition + distanceX;
-    shiftedArray[index - 1].yPosition = -(shiftedArray[index - 1].yPosition - distanceY);
-  }
-  return shiftedArray;
+    var shiftedArray = cornerArray;
+    for (index = cornerArray.length; index > 0; index = index - 1)
+    {
+        shiftedArray[index - 1].xPosition = shiftedArray[index - 1].xPosition + distanceX;
+        shiftedArray[index - 1].yPosition = -(shiftedArray[index - 1].yPosition - distanceY);
+    }
+    return shiftedArray;
 }
 
 
 function drawShape(cornerArray, imageData, red, green, blue, alpha)
 {
-  for (index = 0; index < cornerArray.length; index = index + 1)
-  {
-    var pixelIndex = cornerArray[index].xPosition + ((cornerArray[index].yPosition - 1) * 100);
-    imageData.data[4 * pixelIndex + 0] = red;
-    imageData.data[4 * pixelIndex + 1] = green;
-    imageData.data[4 * pixelIndex + 2] = blue;
-    imageData.data[4 * pixelIndex + 3] = alpha;
-  }
+    for (index = 0; index < cornerArray.length; index = index + 1)
+    {
+        var pixelIndex = cornerArray[index].xPosition + ((cornerArray[index].yPosition - 1) * imageData.width); // imageData.width is how many full lines you need to move
+        imageData.data[4 * pixelIndex + 0] = red;
+        imageData.data[4 * pixelIndex + 1] = green;
+        imageData.data[4 * pixelIndex + 2] = blue;
+        imageData.data[4 * pixelIndex + 3] = alpha;
+    }
 }
 
 
 // to actually display
-var Circle = new createCircle(50);
-var shiftedCircle = shiftCorners(Circle, 50, 50);
+var Circle1 = new createCircle(50);
+var shiftedCircle1 = shiftCorners(Circle1, 50, 50);
 
 var canvas = document.getElementById("canvasID");
 var ctx = canvas.getContext("2d");
 var imgData = ctx.createImageData(100, 100);
 
-drawShape(shiftedCircle, imgData, 255, 0, 0, 255);
+drawShape(shiftedCircle1, imgData, 255, 0, 0, 255);
 ctx.putImageData(imgData, 10, 10);
 
 
@@ -90,7 +90,7 @@ function createProjectileObject(objectName, spriteLink, xOrigin, yOrigin, mass, 
 //  Inputs (Ordered)                          //
 //  objectName, spriteLink                    //
 //  xOrigin, yOrigin, mass                    //
-//  corners
+//  corners                                   //
 //  damage, velocity, deceleration, maxRange  //
 //  explosiveRadius, explosiveTimer           //
 //                                            //
@@ -103,32 +103,32 @@ function createProjectileObject(objectName, spriteLink, xOrigin, yOrigin, mass, 
     this.mass = mass;
 
     this.corners = corners;
-    this.extension = function() // how to get function to run only once and put return value in variable?
+    this.radius = 0;
+    this.setRadius = function() // how to get function to run only once and put return value in variable?; update 06-25-13, simply call the function from within
     {
         var longestRadius = 0;
-        for (index0 = this.corners.length; index0 > 0; index0 = index0 - 1)
+        for (index0 = 0; index0 < this.corners.length; index0 = index0 + 1)
         {
             if (longestRadius < distance(this.corners[index0].xPosition, this.corners[index0].yPosition))
             {
                 longestRadius = distance(this.corners[index0].xPosition, this.corners[index0].yPosition);
             }
         }
-        return longestRadius;
+        this.radius = longestRadius;
     }
     this.collision = function(networkObject1, networkObject2, localObject2) // localObject1 is this
     {
-        var extensionThis = this.extension();
-        var extensionThat = localObject2.extension();
-        if (extensionThis + extensionThat > distance(networkObject1.xPosition + networkObject2.xPosition, networkObject1.yPosition + networkObject2.yPosition)) // checking if the objects are even close enough to consider collision
+        var radiusThis = this.radius;
+        var radiusThat = localObject2.radius;
+        if (radiusThis + radiusThat < distance(networkObject2.xPosition - networkObject1.xPosition, networkObject2.yPosition - networkObject1.yPosition)) // checking if the objects are even close enough to consider collision
         {
             return false;
         }
-        for (index1 = localObject2.corners.length; index1 > 0; index1 = index1 - 1)
+        for (index1 = 0; index1 < localObject2.corners.length; index1 = index1 + 1)
         {
-            for (index2 = this.corners.length; index2 > 0; index2 = index2 - 1)
+            for (index2 = 0; index2 < this.corners.length; index2 = index2 + 1)
             {
-                if ((networkObject2.xPosition + localObject2.corners[index1].xPosition = networkObject1.xPosition + this.corners[index2].yPosition)
-                && (networkObject2.yPosition + localObject2.corners[index1].yPosition = networkObject1.xPosition + this.corners[index2].yPosition)) // check if the corners of network objects are equal to each other
+                if ((networkObject2.xPosition + localObject2.corners[index1].xPosition = networkObject1.xPosition + this.corners[index2].xPosition) && (networkObject2.yPosition + localObject2.corners[index1].yPosition = networkObject1.yPosition + this.corners[index2].yPosition)) // check if the corners of network objects are equal to each other
                 {
                     return true;
                 }
@@ -144,6 +144,9 @@ function createProjectileObject(objectName, spriteLink, xOrigin, yOrigin, mass, 
 
     this.explosiveRadius = explosiveRadius;
     this.explosiveTimer = explosiveTimer;
+
+//  function calls
+    this.setRadius();
 }
 
 
@@ -173,21 +176,38 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
     this.weight = weight;
 
     this.corners = corners;
-    this.extension = function() // how to get function to run only once and put return value in variable?
+    this.radius = 0;
+    this.setRadius = function() // how to get function to run only once and put return value in variable?; update 06-25-13, simply call the function from within
     {
         var longestRadius = 0;
-        for (index0 = this.corners.length; index0 > 0; index0 = index0 - 1)
+        for (index0 = 0; index0 < this.corners.length; index0 = index0 + 1)
         {
             if (longestRadius < distance(this.corners[index0].xPosition, this.corners[index0].yPosition))
             {
                 longestRadius = distance(this.corners[index0].xPosition, this.corners[index0].yPosition);
             }
         }
-        return longestRadius;
-    }    
-    this.collision = function(gameData, playerName)
+        this.radius = longestRadius;
+    }
+    this.collision = function(networkObject1, networkObject2, localObject2) // localObject1 is this
     {
-        // box2d writes this?
+        var radiusThis = this.radius;
+        var radiusThat = localObject2.radius;
+        if (radiusThis + radiusThat < distance(networkObject2.xPosition - networkObject1.xPosition, networkObject2.yPosition - networkObject1.yPosition)) // checking if the objects are even close enough to consider collision
+        {
+            return false;
+        }
+        for (index1 = 0; index1 < localObject2.corners.length; index1 = index1 + 1)
+        {
+            for (index2 = 0; index2 < this.corners.length; index2 = index2 + 1)
+            {
+                if ((networkObject2.xPosition + localObject2.corners[index1].xPosition = networkObject1.xPosition + this.corners[index2].xPosition) && (networkObject2.yPosition + localObject2.corners[index1].yPosition = networkObject1.yPosition + this.corners[index2].yPosition)) // check if the corners of network objects are equal to each other
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     this.magazineSize = magazineSize;
@@ -198,36 +218,36 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
     this.fire = function(gameData, playerName) // where networkPlayerObject is an element of the array playerObject[] for network
     {
         var networkPlayerObject = getObject(gameData.networkObject.playerArray, "objectName", playerName);
-        var variablePlayerObject = getObject(gameData.variableObject.playerArray, "objectName", playerName);
-        var arrayIndex = networkPlayerObject.projectile.length;
-        var projectileObject;
-        while (arrayIndex > 0)
+        var projectileExist;
+        for (index = 0; index < networkPlayerObject.projectile.length; index = index + 1) // if the projectiles already exist (their type has already been fired)
         {
-            if (networkPlayerObject.projectile[arrayIndex].objectName == this.projectile)
+            if (networkPlayerObject.projectile[index].objectName == this.projectile)
             {
-                projectileObject = networkPlayerObject.projectile[arrayIndex];
+                projectileExist = true;
                 break;
             }
-            else
+        }
+        if (projectileExist != true) // if this is the first shot or another instance of the same type of projectile is not in existence yet
+        {
+            networkPlayerObject.projectile[networkPlayerObject.projectile.length] =
             {
-                arrayIndex = arrayIndex - 1;
-            }
-            if (projectileObject == null)
+                "objectName": this.projectile,
+                "xPosition": new Array(),
+                "yPosition": new Array(),
+                "angle": new Array()
+            };
+        }
+        for (index = 0; index < networkPlayerObject.projectile.length; index = index + 1)
+        {
+            if (networkPlayerObject.projectile[index].objectName == this.projectile)
             {
-                networkPlayerObject.projectile[networkPlayerObject.projectile.length] =
-                {
-                    "objectName": this.projectile,
-                    "xPosition": new Array(),
-                    "yPosition": new Array(),
-                    "angle": new Array()
-                };
-                projectileObject = networkPlayerObject.projectile[networkPlayerObject.projectile.length - 1];
+                var newPosition = projectileObject.angle.length;
+                networkPlayerObject.projectile[index].xPosition[newPosition] = networkPlayerObject.xPosition + this.xOrigin;
+                networkPlayerObject.projectile[index].yPosition[newPosition] = networkPlayerObject.yPosition + this.yOrigin;
+                networkPlayerObject.projectile[index].angle[newPosition] = networkPlayerObject.angle + this.recoilFunction(gameData, playerName);
+                break;
             }
         }
-        var newPosition = projectileObject.angle.length;
-        projectileObject.xPosition[newPosition] = networkPlayerObject.xPosition + this.xOrigin; // origin needs establishing
-        projectileObject.yPosition[newPosition] = networkPlayerObject.yPosition + this.yOrigin;
-        projectileObject.angle[newPosition] = networkPlayerObject.angle + this.recoilFunction(variablePlayerObject, networkPlayerObject);
     }
 
     this.recoilHip = recoilHip; // in radians, such as 0.04
@@ -283,6 +303,9 @@ function createWeaponObject(objectName, spriteLink, xOrigin, yOrigin, projectile
             }, this.reloadTime) // average weapon reload time for most games is around 3500 milliseconds
         }
     }
+
+//  function calls
+    this.setRadius();
 }
 
 
@@ -427,6 +450,7 @@ weaponObject
     .magazineCurrent
     .magazineCount
     
+    .firingMode // current firing mode
     .zoom // current zoom (does not matter if right click is pressed, some other maths function will manipulate this property)
     
     .projectile // name of local projectile object
