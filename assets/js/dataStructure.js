@@ -26,13 +26,22 @@ function createCircle(radius)
     var cornerArray = new Array();
     var xPosition;
     var yPosition;
-    for (index = 360; index > 0; index = index - 1) // for finer edges or larger circles, increase
+    var circumference = (10 * radius) // circumference is Math.PI * 2 * radius, but to make sure all the edges are connected, increased factor to 10 * radius
+    while ((360000 % (circumference)) != 0) // the reason this is 360000 is because 360 degrees times 1000, since index has to be an integer in a for loop, but I need it to do more iterations
     {
-        xPosition = radius * Math.cos(index * (Math.PI / 180));
-        yPosition = radius * Math.sin(index * (Math.PI / 180));
+        circumference = circumference + 1; // increase circumference by minute amount to make it so it's divisible
+    }
+    var iteration = 360000 / circumference;
+    for (index = 360000; index > 0; index = index - iteration) // for finer edges or larger circles, increase
+    {
+        xPosition = radius * Math.cos((index / 1000) * (Math.PI / 180));
+        yPosition = radius * Math.sin((index / 1000) * (Math.PI / 180));
         xPosition = floorTowardsZero(xPosition);
         yPosition = floorTowardsZero(yPosition);
-        addCorner(cornerArray, xPosition, yPosition);
+        if (cornerArray[cornerArray.length - 1] != {"xPosition": xPosition, "yPosition": yPosition}) // making sure there are no duplicates, better than a n^2 algorithm
+        {
+            addCorner(cornerArray, xPosition, yPosition);
+        }
     }
     return cornerArray;
 }
@@ -78,6 +87,131 @@ ctx.putImageData(imgData, 10, 10);
 
 
 
+
+
+
+
+
+// FOR LOCAL MAPOBJECT
+function createMapObject(objectName, spriteLink, xOrigin, yOrigin, corners)
+{
+    this.objectName = objectName;
+    this.spriteLink = spriteLink;
+    this.xOrigin = xOrigin;
+    this.yOrigin = yOrigin;
+
+    this.corners = corners;
+    this.radius = 0;
+    this.setRadius = function() // how to get function to run only once and put return value in variable?; update 06-25-13, simply call the function from within
+    {
+        var longestRadius = 0;
+        for (index0 = 0; index0 < this.corners.length; index0 = index0 + 1)
+        {
+            if (longestRadius < distance(this.corners[index0].xPosition, this.corners[index0].yPosition))
+            {
+                longestRadius = distance(this.corners[index0].xPosition, this.corners[index0].yPosition);
+            }
+        }
+        this.radius = longestRadius;
+    }
+    this.collision = function(networkObject1, networkObject2, localObject2) // localObject1 is this
+    {
+        var radiusThis = this.radius;
+        var radiusThat = localObject2.radius;
+        if (radiusThis + radiusThat < distance(networkObject2.xPosition - networkObject1.xPosition, networkObject2.yPosition - networkObject1.yPosition)) // checking if the objects are even close enough to consider collision
+        {
+            return false;
+        }
+        for (index1 = 0; index1 < localObject2.corners.length; index1 = index1 + 1)
+        {
+            for (index2 = 0; index2 < this.corners.length; index2 = index2 + 1)
+            {
+                if ((networkObject2.xPosition + localObject2.corners[index1].xPosition = networkObject1.xPosition + this.corners[index2].xPosition) && (networkObject2.yPosition + localObject2.corners[index1].yPosition = networkObject1.yPosition + this.corners[index2].yPosition)) // check if the corners of network objects are equal to each other
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    this.cornerChange = function(operation, xPosition, yPosition)
+    {
+        if (operation == "add")
+        {
+            this.corners[this.corners.length] = {"xPosition": xPosition, "yPosition": yPosition}; // is the order of corners important? maybe if they are linked by a path... consider changing this later
+        }
+        if (operation == "delete")
+        {
+            for (index = 0; index < this.corners.length; index = index + 1)
+            {
+                if ((this.corners[index].xPosition == xPosition) && (this.corners[index].yPosition == yPosition))
+                {
+                    this.corners.splice(index, 1); // no break statement after this because there might be multiple instances of the same corner inside the array
+                }
+            }
+        }
+    }
+    this.cornerExplode = function(gameData, playerName) // call this on moment of impact
+    {
+        // get angle of projectile
+        // make circle arc from point, or oval with the long part pointing in angle of projectile
+        // remove all appropriate corners
+        var radius;
+        for (index = 0; index < gameData.localObject.projectileArray.length; index = index + 1) // search through local data for the radius
+        {
+            if (projectileObject.objectName == gameData.localObject.projectileArray[index].objectName)
+            {
+                radius = gameData.localObject.projectileArray[index].explosiveRadius;
+            }
+        }
+        var intersection = new Array();
+        var circle = new createCircle(radius);
+        var cornerAdjusted;
+        for (index1 = 0; index1 < circle.length; index1 = index1 + 1)
+        {
+            cornerAdjusted = {"xPosition": projectileObject.xPosition + circle[index1].xPosition, "yPosition": projectileObject.yPosition + circle[index1].yPosition};
+            for (index2 = 0; index2 < this.corners.length; index2 = index2 + 1)
+            {
+                if (cornerAdjusted == this.corners[index2])
+                {
+                    intersection.push(index2); // because of possible duplicate corners, we need to filter for an "unique" array
+                }
+            }
+        }
+        for (index = 0; index < this.corners.length; index = index + 1) // remove everything currently in the circle
+        {
+            if (distance(this.corners[index].yPosition - projectileObject.yPosition, this.corners[index].xPosition - projectileObject.xPosition) < radius)
+            {
+                this.corners.splice(index, 1);
+            }
+        }
+        var intersectionAngle = Math.atan2((this.corners[intersection[1]].yPosition - this.corners[intersection[0].yPosition]), (this.corners[intersection[1].xPosition] - this.corners[intersection[0].xPosition]))
+        if (intersectionAngle < 0)
+        {
+            intersectionAngle = intersectionAngle + (2 * Math.PI);
+        }
+        var projectileAngle = projectileObject.angle; // convert atan2 radians to degrees because easier
+        if (projectileObject.angle < 0)
+        {
+            projectileAngle = projectileObject.angle + (2 * Math.PI);
+        }
+        if ((projectileAngle > intersectionAngle) && (projectileAngle > intersectionAngle + Math.PI)) // filter circle to appropriate arc, also, this is assuming projectileObject.angle is in radians from -Math.PI to Math.PI
+        {
+            this.corners.splice(intersection[0], 1 + intersection[1] - intersection[0];
+        }
+        else
+        {
+            this.corners.splice(0, intersection[0] + 1);
+            this.corners.splice(intersection[1], this.corners.length);
+        }
+
+        for (index = 0; index < circle.length; index = index + 1) // add the arc to the corner array
+        {
+            cornerAdjusted = {"xPosition": projectileObject.xPosition + circle[index].xPosition, "yPosition": projectileObject.yPosition + cirlce[index].yPosition};
+            this.cornerChange("add", cornerAdjusted.xPosition, cornerAdjusted.yPosition);
+        }
+    }
+}
 
 
 
@@ -346,11 +480,11 @@ gameData
         .mapArray[] // array of map objects, each of which has several instances of each kind of object
             .mapObject // has objectName, xPosition, yPosition
     .localObject
-        .playerObject
-        .weaponObject
-        .equipmentObject
-        .projectileObject
-        .mapObject
+        .playerArray[] // different player models
+        .weaponArray[]
+        .equipmentArray[]
+        .projectileArray[]
+        .mapArray[]
 */
 
 
