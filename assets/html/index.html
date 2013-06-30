@@ -7,7 +7,7 @@
 	<script type="text/javascript">
 	  var socket;
 	  $(document).ready(function(){
-		socket=io.connect('http://'+window.location.host);
+		socket=io.connect(window.location.origin);
 
 		socket.on('loginResult',function(data){
 		  console.log('login result recieved');
