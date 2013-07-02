@@ -38,12 +38,32 @@ function createCircle(radius)
         yPosition = radius * Math.sin((index / 1000) * (Math.PI / 180));
         xPosition = floorTowardsZero(xPosition);
         yPosition = floorTowardsZero(yPosition);
-        if (cornerArray[cornerArray.length - 1] != {"xPosition": xPosition, "yPosition": yPosition}) // making sure there are no duplicates, better than a n^2 algorithm
-        {
-            addCorner(cornerArray, xPosition, yPosition);
-        }
+        cornerArray.push({"xPosition": xPosition, "yPosition": yPosition}); // removed previous checking method because js equivalency doesn't extend to objects
     }
-    return cornerArray;
+    var returnArray = new Array();
+    var index1 = 0;
+    var index2 = 0;
+    var bool = true;
+    while (index1 < cornerArray.length)
+    {
+        bool = true;
+        index2 = 0;
+        while (index2 < returnArray.length)
+        {
+            if (cornerArray[index1].xPosition == returnArray[index2].xPosition && cornerArray[index1].yPosition == returnArray[index2].yPosition)
+            {
+                bool = false;
+                break;
+            }
+            index2 = index2 + 1;
+        }
+        if (bool == true)
+        {
+            returnArray.push(cornerArray[index1]);
+        }
+        index1 = index1 + 1;
+    }
+    return returnArray;
 }
 
 
@@ -156,16 +176,17 @@ function createMapObject(objectName, spriteLink, xOrigin, yOrigin, corners)
         // get angle of projectile
         // make circle arc from point, or oval with the long part pointing in angle of projectile
         // remove all appropriate corners
-        var radius;
+        var localProjectile;
         for (index = 0; index < gameData.localObject.projectileArray.length; index = index + 1) // search through local data for the radius
         {
             if (projectileObject.objectName == gameData.localObject.projectileArray[index].objectName)
             {
-                radius = gameData.localObject.projectileArray[index].explosiveRadius;
+                localProjectile = gameData.localObject.projectileArray[index];
             }
         }
+        var radius = localProjectile.explosiveRadius;
+        var circle = localProjectile.impact;
         var intersection = new Array();
-        var circle = new createCircle(radius);
         var cornerAdjusted;
         for (index1 = 0; index1 < circle.length; index1 = index1 + 1)
         {
@@ -195,7 +216,7 @@ function createMapObject(objectName, spriteLink, xOrigin, yOrigin, corners)
         {
             projectileAngle = projectileObject.angle + (2 * Math.PI);
         }
-        if ((projectileAngle > intersectionAngle) && (projectileAngle > intersectionAngle + Math.PI)) // filter circle to appropriate arc, also, this is assuming projectileObject.angle is in radians from -Math.PI to Math.PI
+        if ((projectileAngle > intersectionAngle) && (projectileAngle > (intersectionAngle + Math.PI))) // filter circle to appropriate arc, also, this is assuming projectileObject.angle is in radians from -Math.PI to Math.PI
         {
             this.corners.splice(intersection[0], 1 + intersection[1] - intersection[0];
         }
@@ -250,6 +271,11 @@ function createProjectileObject(objectName, spriteLink, xOrigin, yOrigin, mass, 
         }
         this.radius = longestRadius;
     }
+    this.impact = new Array();
+    this.setImpact = function()
+    {
+        this.impact = createCircle(this.explosiveRadius + 10); // explosiveRadius is the radius of playerObjects affected by the bullet on impact, whereas this.impact is the effect on the walls, hence the +10
+    }
     this.collision = function(networkObject1, networkObject2, localObject2) // localObject1 is this
     {
         var radiusThis = this.radius;
@@ -281,6 +307,7 @@ function createProjectileObject(objectName, spriteLink, xOrigin, yOrigin, mass, 
 
 //  function calls
     this.setRadius();
+    this.setImpact();
 }
 
 
