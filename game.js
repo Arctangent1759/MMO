@@ -1,5 +1,5 @@
 var b2d = require('box2d');
-var constants = require('/server_constants.js').constants;
+var constants = require('./server_constants.js').constants;
 
 function Physics(sessions){
 

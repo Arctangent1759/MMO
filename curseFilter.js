@@ -96,3 +96,31 @@ function Tree(value){
 }
 
 exports.CurseFilter=CurseFilter;
+
+/**
+ *
+ * “Some lurid things have been 
+ * said about me—that I am a 
+ * racist, a hopeless alcoholic, 
+ * a closet homosexual and so 
+ * forth—that I leave to others 
+ * to decide the truth of. I'd 
+ * only point out, though, that 
+ * if true these accusations 
+ * must also have been true 
+ * when I was still on the correct 
+ * side, and that such shocking 
+ * deformities didn't seem to 
+ * count for so much then. 
+ * Arguing with the Stalinist 
+ * mentality for more than three d
+ * ecades now, and doing a bit of 
+ * soapboxing and street-corner 
+ * speaking on and off, has meant 
+ * that it takes quite a lot to 
+ * hurt my tender feelings, or 
+ * bruise my milk-white skin.” 
+ *
+ *                   --Christopher Hitchens
+ *
+ */

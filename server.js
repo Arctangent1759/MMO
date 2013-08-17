@@ -16,7 +16,7 @@ function start(route,handle){
   //Collection of User Objects
   var userDb;
 
-  //All session keys and associated clientside data. Kids, don't make your data structures this way.
+  //All session keys and associated clientside data.
   var sessions={
 	__list:{},
 	__EmailToKey:{},
@@ -326,7 +326,6 @@ function start(route,handle){
 			socket.emit('game_heartbeat',{});
 		  }
 		  sessions.each(function(key,value){
-			console.log(value.playerObj);
 			if (typeof(value.playerObj.x)!='number' || typeof(value.playerObj.y)!='number'){
 			  value.playerObj.x=0;
 			  value.playerObj.y=0;
@@ -350,10 +349,6 @@ function start(route,handle){
 	},
 	function startPurgeProcess(next){
 	  setInterval(sessions.purge,60000);
-	  next();
-	},
-	function startGameLoop(next){
-	  setInterval(function(){gameLoop(sessions);},15);
 	  next();
 	},
 	function finish(){
@@ -396,11 +391,12 @@ exports.start=start;
 
 /**
  *
- * Here lies a toppled god.
+ * “Here lies a toppled god.
  * His fall was not a small one.
  * We did but build his pedestal,
- * A narrow and a tall one.
- *                            --H.G. Wells
+ * A narrow and a tall one.”
+ *
+ *                      --H.G. Wells
  *
  */
 
