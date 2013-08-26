@@ -1,32 +1,100 @@
 var Vector = require('./vector.js').Vector;
-function Player(x,y,z,vx,vy,vz,ax,ay,az){
-  this._position = new Vector(x,y,z);
-  this._velocity = new Vector(vx,vy,vz);
-  this._acceleration = new Vector(ax,ay,az);
+var Bullet = require('./bullet.js').Bullet;
+var constants = require('./server_constants.js').constants;
+var computeBonus = require('./util.js').computeBonus;
+var computeExpCap = require('./util.js').computeExpCap;
+
+function Player(x,y,vx,vy,ax,ay,stats){
+
+  this._position = new Vector(x,y);
+  this._velocity = new Vector(vx,vy);
+  this._acceleration = new Vector(ax,ay);
+  this.bullets=[];
+  this.fireCounter=0;
+
+  //Init temp_Stats
+  this.max_health=constants.player_base_health+computeBonus(stats.constitution)*10;
+  this.health=this.max_health;
+  this.stats=stats;
+
 }
 
 Player.prototype.position=function(vec){
-  if (typeof(vec)==object){
-	this.position=vec;
+  if (typeof(vec)=='object'){
+	this._position=vec;
   }else{
-	return this.position;
+	return this._position;
   }
 }
 
 Player.prototype.velocity=function(vec){
-  if (typeof(vec)==object){
-	this.velocity=vec;
+  if (typeof(vec)=='object'){
+	this._velocity=vec;
   }else{
-	return this.velocity;
+	return this._velocity;
   }
 }
 
 Player.prototype.acceleration=function(vec){
-  if (typeof(vec)==object){
-	this.acceleration=vec;
+  if (typeof(vec)=='object'){
+	this._acceleration=vec;
   }else{
-	return this.acceleration;
+	return this._acceleration;
   }
+}
+
+Player.prototype.spawnBullet=function(v){
+  if (this.fireCounter == 0){
+	var b = new Bullet(this.position().x(),this.position().y(),constants.bullet_speed*v.x(),constants.bullet_speed*v.y());
+	this.bullets.push(b);
+
+	//Update momentum
+	var v_parallel = this.velocity().getUnitVector().scale(
+		this.velocity().dotProd(
+		  b.velocity().getUnitVector()
+		  )
+		);
+
+	var v_final = v_parallel.scale(
+		(constants.player_mass+computeBonus(this.stats.constitution)+constants.bullet_mass)/(constants.player_mass+computeBonus(this.stats.constitution))
+		).subtract(b.velocity().scale(
+			(constants.bullet_mass)/(constants.player_mass+computeBonus(this.stats.constitution))
+			));
+
+	this.velocity(this.velocity().add(v_final.subtract(v_parallel)));
+
+	this.fireCounter=constants.fire_frames;
+  }
+}
+
+Player.prototype.update=function(){
+  this.velocity(this.velocity().add(this.acceleration()));
+  this.position(this.position().add(this.velocity()));
+  for (var i = 0; i < this.bullets.length; i++){
+	this.bullets[i].update();
+  }
+  if (this.bullets.length>constants.max_bullets){
+	this.bullets.shift();
+  }
+  if (this.fireCounter>0){
+	this.fireCounter--;
+  }
+}
+
+Player.prototype.commit=function(){
+  //TODO: Update Sessions for database update here.
+}
+
+Player.prototype.inform=function(p){
+  p.x=this.position().x();
+  p.y=this.position().y();
+  p.bullets=this.bullets;
+  p.max_health=this.max_health;
+  p.health=this.health;
+  p.max_exp=computeExpCap(this.stats.level);
+  p.exp=this.stats.experience;
+  p.level=this.stats.level;
+  p.stats=this.stats;
 }
 
 exports.Player=Player;
