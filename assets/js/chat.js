@@ -10,11 +10,11 @@ function sendChat(message,channel){
   socket.emit('chat',msg);
 }
 
-function recieveChat(data){
+function chatTest(data){
   //TODO: Actually do stuff with UI.
   console.log('@'+data.timestamp+'  ---  '+data.sender+' >> '+data.channel+': ' + data.message);
 }
 
-function setupChat(){
-  socket.on('chat',recieveChat);
+function setupChat(onChat){
+  socket.on('chat',onChat);
 }

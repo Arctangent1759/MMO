@@ -17,6 +17,8 @@ function start(route,handle){
   //Collection of User Objects
   var userDb;
 
+  var ioObj;
+
   //All session keys and associated clientside data.
   var sessions={
 	__list:{},
@@ -149,7 +151,7 @@ function start(route,handle){
 			console.log("\thttp started.")
 			next();
 		  });
-		io.listen(server, {log:false}).on('connection',function(socket){
+		ioObj=io.listen(server, {log:false}).on('connection',function(socket){
 
 		  var isActive = false; //Records whether the current account is active. Set to true after setUp is called.
 
@@ -218,14 +220,14 @@ function start(route,handle){
 					  password:pwHash(data.password),
 					  stats:{
 						'strength':dice.statRoll(4,6),
-						'dexterity':dice.statRoll(4,6),
-						'constitution':dice.statRoll(4,6),
-						'intelligence':dice.statRoll(4,6),
-						'wisdom':dice.statRoll(4,6),
-						'charisma':dice.statRoll(4,6),
-						'experience':0,
-						'level':1,
-						'skillPoints':0,
+					  'dexterity':dice.statRoll(4,6),
+					  'constitution':dice.statRoll(4,6),
+					  'intelligence':dice.statRoll(4,6),
+					  'wisdom':dice.statRoll(4,6),
+					  'charisma':dice.statRoll(4,6),
+					  'experience':0,
+					  'level':1,
+					  'skillPoints':0,
 					  },
 					  preferences:{
 						languageFilter:true, //No one wants to hear about 'yolo cs70 republican beiber swag' ever again.
@@ -350,15 +352,17 @@ function start(route,handle){
 			}
 		  });
 
-		  //Set game heartbeat to constants.gameRefresh
-		  setInterval(function(){
-			if (isActive){
-			  socket.emit('game_heartbeat',{});
-			}
-			physics.step();
-		  },constants.gameRefresh);
-
 		});
+	  },
+	  function startHeartbeat(next){
+		//Set game heartbeat to constants.gameRefresh
+		setInterval(function(){
+		  ioObj.sockets.emit('game_heartbeat',{});
+		  physics.step();
+		},constants.gameRefresh);
+
+
+		next();
 	  },
 
 	  function startPurgeProcess(next){

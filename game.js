@@ -92,7 +92,7 @@ function Physics(sessions){
 
 	  if (accelIn.norm()!=0){
 		//Normalize.
-		accelIn=accelIn.getUnitVector().scale(constants.player_acceleration+computeBonus(value.stats.dexterity)/1000);
+		accelIn=accelIn.getUnitVector().scale(constants.player_acceleration+computeBonus(value.stats.dexterity)/100);
 	  }
 
 	  if (value.gameState.velocity().norm()!=0){

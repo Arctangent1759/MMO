@@ -21,7 +21,9 @@ function Player(x,y,vx,vy,ax,ay,stats){
 
 Player.prototype.position=function(vec){
   if (typeof(vec)=='object'){
-	this._position=vec;
+	if (!(isNaN(vec.x()) || isNaN(vec.y()) || isNaN(vec.z()))){
+	  this._position=vec;
+	}
   }else{
 	return this._position;
   }
@@ -29,7 +31,9 @@ Player.prototype.position=function(vec){
 
 Player.prototype.velocity=function(vec){
   if (typeof(vec)=='object'){
-	this._velocity=vec;
+	if (!(isNaN(vec.x()) || isNaN(vec.y()) || isNaN(vec.z()))){
+	  this._velocity=vec;
+	}
   }else{
 	return this._velocity;
   }
@@ -37,14 +41,16 @@ Player.prototype.velocity=function(vec){
 
 Player.prototype.acceleration=function(vec){
   if (typeof(vec)=='object'){
-	this._acceleration=vec;
+	if (!(isNaN(vec.x()) || isNaN(vec.y()) || isNaN(vec.z()))){
+	  this._acceleration=vec;
+	}
   }else{
 	return this._acceleration;
   }
 }
 
 Player.prototype.spawnBullet=function(v){
-  if (this.fireCounter == 0){
+  if (this.fireCounter <= 0){
 	var b = new Bullet(this.position().x(),this.position().y(),constants.bullet_speed*v.x(),constants.bullet_speed*v.y());
 	this.bullets.push(b);
 
@@ -63,7 +69,7 @@ Player.prototype.spawnBullet=function(v){
 
 	this.velocity(this.velocity().add(v_final.subtract(v_parallel)));
 
-	this.fireCounter=constants.fire_frames;
+	this.fireCounter=10*constants.gameRefresh/(constants.fire_rate+computeBonus(this.stats.intelligence)/4);
   }
 }
 

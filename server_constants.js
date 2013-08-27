@@ -10,14 +10,14 @@ constants={
   'gameRefresh':15,
 
   //Physical Constants
-  'friction':.005,
+  'friction':.015,
   'collision_radius':15,
   'collision_buffer':0,
-  'player_acceleration':.01,
+  'player_acceleration':.2,
   'player_mass':15,
-  'bullet_speed':4,
-  'fire_rate':1,
-  'max_bullets':100,
+  'bullet_speed':16,
+  'fire_rate':5,
+  'max_bullets':20,
   'bullet_mass':1,
   'bullet_base_damage':5,
   'bullet_base_dice':6,
@@ -28,7 +28,5 @@ constants={
   'skillPointsPerLevel':3,
 }
 
-//Autocomputed Values
-constants['fire_frames']=10*constants['gameRefresh']/constants['fire_rate'];
 
 exports.constants=constants
