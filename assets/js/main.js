@@ -72,9 +72,15 @@ function init(){
   var chatInput = document.getElementById("chatTextBox");
   chatInput.onkeyup=function(e){
 	if (e.keyCode==13){
-	  sendChat(chatInput.value,"ALL");
-	  chatInput.value="";
+	  if (chatInput.value!=""){
+		sendChat(chatInput.value,"ALL");
+		chatInput.value="";
+		chatInput.blur();
+	  }
+	}else if(e.keyCode==38){
+	}else if(e.keyCode==40){
 	}
+
   }
   //Create and style game canvas
   $("#"+CONTAINER_ID).html("<div width='100%'height='"+PADDING+"'>&nbsp</div><canvas id="+CANVAS_ID+" class=game_container width=200 height=200></canvas>");
@@ -97,6 +103,9 @@ function init(){
   });
   $(document).keydown(function(e){
 	if (document.activeElement.id!="chatTextBox"){
+	  if (e.keyCode==13){
+		document.getElementById("chatTextBox").focus();
+	  }
 	  command.keyboard[String.fromCharCode(e.which).toLowerCase()]=true;
 	}
   });
@@ -202,6 +211,7 @@ function paint(graphics){
 	graphics.circle((window.innerWidth-PADDING)/2-120,0,0,3*RADAR_RADIUS/4,'#777777',false);
 	graphics.circle((window.innerWidth-PADDING)/2-120,0,0,RADAR_RADIUS/2,'#AAAAAA',false);
 	graphics.circle((window.innerWidth-PADDING)/2-120,0,0,RADAR_RADIUS/4,'#FFFFFF',false);
+	//Dots
 	for (var i = 0; i < radar_pts.length; i++){
 	  graphics.circle((window.innerWidth-PADDING)/2-120+radar_pts[i][0],radar_pts[i][1],0,radarMarkerState/10,'red',false);
 	}
@@ -234,9 +244,9 @@ function Graphics(cvs,ctx){
 	this.arcCircle(x,y,angle,2*Math.PI,radius,lineColor,fillColor);
   }
   this.arcCircle=function(x,y,angle,angleSweep,radius,lineColor,fillColor){
- 	this.ctx.beginPath();
+	this.ctx.beginPath();
 	if (angleSweep!=2*Math.PI){
-	this.ctx.moveTo(this.cvs.width/2+x, this.cvs.height/2-y);
+	  this.ctx.moveTo(this.cvs.width/2+x, this.cvs.height/2-y);
 	}
 	this.ctx.arc(this.cvs.width/2+x,this.cvs.height/2-y,radius,angle,angle+angleSweep,false);
 	if (angleSweep!=2*Math.PI){

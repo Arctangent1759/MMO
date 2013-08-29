@@ -7,7 +7,9 @@ function Bullet(x,y,vx,vy){
 
 Bullet.prototype.position=function(vec){
   if (typeof(vec)=='object'){
-	this._position=vec;
+	if (!(isNaN(vec.x()) || isNaN(vec.y()) || isNaN(vec.z()))){
+	  this._position=vec;
+	}
   }else{
 	return this._position;
   }
@@ -15,7 +17,9 @@ Bullet.prototype.position=function(vec){
 
 Bullet.prototype.velocity=function(vec){
   if (typeof(vec)=='object'){
-	this._velocity=vec;
+	if (!(isNaN(vec.x()) || isNaN(vec.y()) || isNaN(vec.z()))){
+	  this._velocity=vec;
+	}
   }else{
 	return this._velocity;
   }

@@ -167,7 +167,7 @@ function start(route,handle){
 			userDb.findOne({email:data.email},function(err,item){
 			  if (item && pwHash(data.password)==item.password){
 				//Successful Login
-				var newSessionKey=genSessionKey(sessions,item,data.persistent);
+				var newSessionKey=genSessionKey(sessions,item,false);
 				socket.emit('loginResult',{sessionKey:newSessionKey});
 				console.log(newSessionKey);
 				physics.addPlayer(newSessionKey);
