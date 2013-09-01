@@ -72,15 +72,36 @@ function init(){
 		document.getElementById("chatOutput").scrollTop = document.getElementById("chatOutput").scrollHeight;
 	});
 	var chatInput = document.getElementById("chatTextBox");
+	var messageHistory=[];
+	var messagePos=0;
+	var messageTemp="";
 	chatInput.onkeyup=function(e){
 		if (e.keyCode==13){
 			if (chatInput.value!=""){
+				e.preventDefault();
 				sendChat(chatInput.value,"ALL");
+				messageHistory.push(chatInput.value);
+				messagePos=messageHistory.length;
 				chatInput.value="";
 				chatInput.blur();
 			}
 		}else if(e.keyCode==38){
+			if (messagePos == messageHistory.length){
+				messageTemp=chatInput.value;
+			}
+			if (messagePos > 0){
+				messagePos--;
+			}
+			chatInput.value=messageHistory[messagePos];
 		}else if(e.keyCode==40){
+			if (messagePos < messageHistory.length){
+				messagePos++;
+			}
+			if (messagePos==messageHistory.length){
+				chatInput.value=messageTemp;
+			}else{
+				chatInput.value=messageHistory[messagePos];
+			}
 		}
 	}
 	//Create and style game canvas
@@ -172,6 +193,7 @@ function paint(graphics){
 				graphics.circle(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,Math.PI/2,15,'white','red');
 				//Draw health bar
 				graphics.rect(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y+25,0,30*players[i].health/players[i].max_health,5,'white','red');
+				//Construct radar list
 				if (getDistance(playerData.playerObj.x,playerData.playerObj.y,players[i].x,players[i].y)<RADAR_REACH){
 					radar_pts.push([
 							RADAR_RADIUS*(players[i].x-playerData.playerObj.x)/RADAR_REACH,
@@ -189,29 +211,37 @@ function paint(graphics){
 
 		//Draw HUD
 		//Health bar
-		graphics.rect(0,-(window.innerHeight-PADDING)/2+20,0,200,5,'white','black');
-		graphics.rect(0,-(window.innerHeight-PADDING)/2+20,0,200*me.health/me.max_health,5,'white','red');
+		graphics.rect(0,-(window.innerHeight-PADDING)/2+20,0,220,25,false,'rgba(0,0,0,0.3)');
+		graphics.rect(0,-(window.innerHeight-PADDING)/2+20,0,200,5,'white','rgba(0,0,0,0.5)');
+		graphics.rect(0,-(window.innerHeight-PADDING)/2+20,0,200*me.health/me.max_health,6,'rgba(255,0,0,.5)','rgba(255,0,0,1)');
+		//Visibility Overlay
+		graphics.sideRect((window.innerWidth-PADDING)/2-230,(window.innerHeight-PADDING)/2,0,230,45,false,'rgba(0,0,0,0.4)');
+		if (me.stats.skillPoints>0){
+			graphics.sideRect((window.innerWidth-PADDING)/2-160,(window.innerHeight-PADDING)/2-50,0,150,75,false,'rgba(0,0,0,0.5)');
+		}else{
+			graphics.sideRect((window.innerWidth-PADDING)/2-160,(window.innerHeight-PADDING)/2-50,0,140,55,false,'rgba(0,0,0,0.4)');
+		}
 		//EXP Bar
 		graphics.sideRect((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-20,0,200,5,'white','black');
 		graphics.sideRect((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-20,0,200*me.exp/me.max_exp,5,'white','yellow');
 		graphics.string((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-40,'white',"Level " + me.level);
 		//Stats
-		graphics.string((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-60,'white',"STR " + me.stats.strength);
-		graphics.string((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-80,'white',"DEX " + me.stats.dexterity);
-		graphics.string((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-100,'white',"CON " + me.stats.constitution);
-		graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-60,'white',"INT " + me.stats.intelligence);
-		graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-80,'white',"WIS " + me.stats.wisdom);
-		graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-100,'white',"CHA " + me.stats.charisma);
+		graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-60,'white',"STR " + me.stats.strength);
+		graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-80,'white',"DEX " + me.stats.dexterity);
+		graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-100,'white',"CON " + me.stats.constitution);
+		graphics.string((window.innerWidth-PADDING)/2-80,(window.innerHeight-PADDING)/2-60,'white',"INT " + me.stats.intelligence);
+		graphics.string((window.innerWidth-PADDING)/2-80,(window.innerHeight-PADDING)/2-80,'white',"WIS " + me.stats.wisdom);
+		graphics.string((window.innerWidth-PADDING)/2-80,(window.innerHeight-PADDING)/2-100,'white',"CHA " + me.stats.charisma);
 		//SkillPoints Counter (Shown only if points avalible)
 		if (me.stats.skillPoints>0){
-			graphics.string((window.innerWidth-PADDING)/2-220,(window.innerHeight-PADDING)/2-120,'white',"Skill Points: " + me.stats.skillPoints);
+			graphics.string((window.innerWidth-PADDING)/2-150,(window.innerHeight-PADDING)/2-120,'white',"Skill Points: " + me.stats.skillPoints);
 			//Level Up Buttons
-			graphics.button((window.innerWidth-PADDING)/2-180,(window.innerHeight-PADDING)/2-60,20,10,"<+>","white","black",false,"green", upgradeStat,"STR");
-			graphics.button((window.innerWidth-PADDING)/2-180,(window.innerHeight-PADDING)/2-80,20,10,"<+>","white","black",false,"green", upgradeStat,"DEX");
-			graphics.button((window.innerWidth-PADDING)/2-180,(window.innerHeight-PADDING)/2-100,20,10,"<+>","white","black",false,"green", upgradeStat,"CON");
-			graphics.button((window.innerWidth-PADDING)/2-110,(window.innerHeight-PADDING)/2-60,20,10,"<+>","white","black",false,"green", upgradeStat,"INT");
-			graphics.button((window.innerWidth-PADDING)/2-110,(window.innerHeight-PADDING)/2-80,20,10,"<+>","white","black",false,"green", upgradeStat,"WIS");
-			graphics.button((window.innerWidth-PADDING)/2-110,(window.innerHeight-PADDING)/2-100,20,10,"<+>","white","black",false,"green", upgradeStat,"CHA");
+			graphics.button((window.innerWidth-PADDING)/2-110,(window.innerHeight-PADDING)/2-60,20,10,"<+>","white","black",false,"green", upgradeStat,"STR");
+			graphics.button((window.innerWidth-PADDING)/2-110,(window.innerHeight-PADDING)/2-80,20,10,"<+>","white","black",false,"green", upgradeStat,"DEX");
+			graphics.button((window.innerWidth-PADDING)/2-110,(window.innerHeight-PADDING)/2-100,20,10,"<+>","white","black",false,"green", upgradeStat,"CON");
+			graphics.button((window.innerWidth-PADDING)/2-40,(window.innerHeight-PADDING)/2-60,20,10,"<+>","white","black",false,"green", upgradeStat,"INT");
+			graphics.button((window.innerWidth-PADDING)/2-40,(window.innerHeight-PADDING)/2-80,20,10,"<+>","white","black",false,"green", upgradeStat,"WIS");
+			graphics.button((window.innerWidth-PADDING)/2-40,(window.innerHeight-PADDING)/2-100,20,10,"<+>","white","black",false,"green", upgradeStat,"CHA");
 		}
 		//Radar
 		//Sweep
@@ -220,7 +250,7 @@ function paint(graphics){
 		//Lines
 		graphics.line((window.innerWidth-PADDING)/2-120-RADAR_RADIUS,0,(window.innerWidth-PADDING)/2-120+RADAR_RADIUS,0,'#777777');
 		graphics.line((window.innerWidth-PADDING)/2-120,-RADAR_RADIUS,(window.innerWidth-PADDING)/2-120,RADAR_RADIUS,'#777777');
-		graphics.circle((window.innerWidth-PADDING)/2-120,0,0,RADAR_RADIUS,'#555555',false);
+		graphics.circle((window.innerWidth-PADDING)/2-120,0,0,RADAR_RADIUS,'#555555','rgba(0,0,0,.6)');
 		graphics.circle((window.innerWidth-PADDING)/2-120,0,0,3*RADAR_RADIUS/4,'#777777',false);
 		graphics.circle((window.innerWidth-PADDING)/2-120,0,0,RADAR_RADIUS/2,'#AAAAAA',false);
 		graphics.circle((window.innerWidth-PADDING)/2-120,0,0,RADAR_RADIUS/4,'#FFFFFF',false);
@@ -236,6 +266,7 @@ function paint(graphics){
 
 function upgradeStat(stat){
 	command.upgrade=stat;
+	command.click=false;
 }
 function getDistance(x1,y1,x2,y2){
 	return Math.sqrt((y2-y1)*(y2-y1)+(x2-x1)*(x2-x1));
