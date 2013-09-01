@@ -48,6 +48,10 @@ window.requestAnimFrame = (function(){
 		);
 })();
 
+window.onunload=function(){
+	socket.emit('logout',{sessionKey:sessionKey});
+}
+
 
 
 //////////////////////////////////////////////////////
@@ -171,7 +175,7 @@ function paint(graphics){
 		graphics.clearScreen('black');
 
 		//Draw parallax
-		graphics.image('landscape',-playerData.playerObj.x/6,-playerData.playerObj.y/6);
+		graphics.image('landscape',-playerData.playerObj.x/6,-playerData.playerObj.y/6,0);
 
 		//Draw background
 		var bgTilesX=Math.floor(graphics.cvs.width/graphics.images['background'].width);
@@ -180,7 +184,7 @@ function paint(graphics){
 		var bgY=-(((playerData.playerObj.y/2)%(graphics.images['background'].height))+graphics.images['background'].height/2);
 		for (var i = -2*bgTilesX; i < 4*bgTilesX; i++){
 			for (var j = -2*bgTilesY; j < 4*bgTilesY; j++){
-				graphics.image('background',bgX+i*graphics.images['background'].width,bgY+j*graphics.images['background'].height);
+				graphics.image('background',bgX+i*graphics.images['background'].width,bgY+j*graphics.images['background'].height,0);
 			}
 		}
 		//Draw player
@@ -278,9 +282,13 @@ function Graphics(cvs,ctx,images){
 	this.cvs=cvs;
 	this.ctx=ctx;
 	this.images=images;
-	this.image=function(imgName,x,y){
+	this.image=function(imgName,x,y,angle){
+		this.ctx.save();
 		var img = images[imgName];
-		this.ctx.drawImage(img,this.cvs.width/2-img.width/2+x,this.cvs.height/2-img.height/2-y)
+		this.ctx.rotate(angle);
+		this.ctx.translate(this.cvs.width/2-img.width/2+x,this.cvs.height/2-img.height/2-y);
+		this.ctx.drawImage(img,0,0);
+		this.ctx.restore();
 	}
 	this.line=function(x1,y1,x2,y2,lineColor){
 		this.ctx.beginPath();
