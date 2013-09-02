@@ -48,9 +48,11 @@ window.requestAnimFrame = (function(){
 		);
 })();
 
+/*
 window.onunload=function(){
 	socket.emit('logout',{sessionKey:sessionKey});
 }
+*/
 
 
 

@@ -8,6 +8,7 @@ var constants=require('./server_constants.js').constants;
 var validate = require('./validate.js').validate;
 var Physics = require('./game.js').Physics;
 var dice = require('./dice.js').dice;
+var Sessions = require('./Sessions.js').Sessions;
 
 //Constants
 
@@ -19,94 +20,10 @@ function start(route,handle){
 
 	var ioObj;
 
+	var sessions = new Sessions();
+
 	//All session keys and associated clientside data.
-	var sessions={
-		__list:{},
-		__EmailToKey:{},
-		__size:0,
-		insert:function(key,email,username,preferences,persistent,stats){
-			if (this.has(key)){
-				//Disallow key collisions
-				return false;
-			}
-			if (this.__EmailToKey[email]){
-				return this.__EmailToKey[email];
-			}
-			this.__list[key]={
-				last_accessed:new Date(),
-				email:email,
-				username:username,
-				preferences:preferences,
-				command:{
-					keyboard:{
-					},
-					mouse:{
-						click:false,
-						position:[0,0],
-					},
-					upgrade:"",
-				},
-				playerObj:{  
-					username:username,
-					max_health:false,
-					max_exp:false,
-					exp:false,
-					level:false,
-					stats:false,
-					health:false,
-					x:false,
-					y:false,
-					bullets:[],
-				},
-				gameState:false,
-				persistent:persistent,
-				sessionKey:key,
-				stats:stats,
-			};
-			this.__EmailToKey[email]=key;
-			this.__size++;
-			return key;
-		},
-		remove:function(key){
-			if (!this.has(key)){
-				return false;
-			}
-			this.__size--;
-			delete this.__EmailToKey[this.__list[key].email];
-			delete this.__list[key];
-			return true;
-		},
-		has:function(key){
-			return this.__list.hasOwnProperty(key);
-		},
-		get:function(key){
-			if (!this.has(key)){
-				return false;
-			}
-			this.__list[key].last_accessed=new Date();
-			return this.__list[key];
-		},
-		purge:function(){
-			console.log(this);
-			for (var i in this.__list){
-				console.log(i+" "+this.__list[i].persistent+" "+new Date()+" "+this.__list[i].last_accessed+" "+new Date()-this.__list[i].last_accessed>constants.session_timeout);
-				if (!this.__list[i].persistent && new Date()-this.__list[i].last_accessed>constants.session_timeout){
-					//Kill session if it's not marked as persistent and last_accessed is older than session_timeout.
-					console.log("Deleting session "+i);
-					this.remove(i);
-				}
-			}
-		},
-		size:function(){
-			return __size;
-		},
-		each:function(callback){
-			//Callback is in the form function(key,value)
-			for (var i in this.__list){
-				callback(i,this.__list[i]);
-			}
-		}
-	};
+
 
 	var langFilter,physics;
 
@@ -137,6 +54,7 @@ function start(route,handle){
 			db.collection('Users',function(err, collection){
 				if (!err){
 					userDb=collection;
+					sessions.__db=userDb
 					console.log('\tDatabase successfully connected.');
 					next();
 				}else{console.log(err);}
@@ -221,22 +139,22 @@ function start(route,handle){
 											//Create the user.
 											userDb.insert({
 												email:data.email,
-											username:data.username,
-											password:pwHash(data.password),
-											stats:{
-												'strength':dice.statRoll(4,6),
-											'dexterity':dice.statRoll(4,6),
-											'constitution':dice.statRoll(4,6),
-											'intelligence':dice.statRoll(4,6),
-											'wisdom':dice.statRoll(4,6),
-											'charisma':dice.statRoll(4,6),
-											'experience':0,
-											'level':1,
-											'skillPoints':0,
-											},
-											preferences:{
-												languageFilter:true, //No one wants to hear about 'yolo cs70 republican beiber swag' ever again.
-											}
+												username:data.username,
+												password:pwHash(data.password),
+												stats:{
+													'strength':dice.statRoll(4,6),
+													'dexterity':dice.statRoll(4,6),
+													'constitution':dice.statRoll(4,6),
+													'intelligence':dice.statRoll(4,6),
+													'wisdom':dice.statRoll(4,6),
+													'charisma':dice.statRoll(4,6),
+													'experience':0,
+													'level':1,
+													'skillPoints':0,
+												},
+												preferences:{
+													languageFilter:true, //No one wants to hear about 'yolo cs70 republican beiber swag' ever again.
+												}
 											},{safe:true},function(err,result){
 												if (err){
 													socket.emit('createUserResult',{error:'Internal server error. Something broke. We\'re sorry.'});  //TURING LIVES!
@@ -371,7 +289,7 @@ function start(route,handle){
 			},
 
 			function startPurgeProcess(next){
-				setInterval(sessions.purge,6000);
+				setInterval(function(){sessions.purge();},10000);
 				next();
 			},
 

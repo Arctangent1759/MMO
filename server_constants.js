@@ -6,7 +6,7 @@ constants={
   'db_port':27017,
 
   //Server behavior
-  'session_timeout':10000,
+  'session_timeout':1000,
   'gameRefresh':15,
 
   //Physical Constants
