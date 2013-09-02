@@ -53,8 +53,6 @@ var Sessions=function(){
 		}
 		this.__size--;
 		//Commmit data to database
-		console.log(this.__list[key].email);
-		console.log(this.__list[key].stats);
 		this.__db.update({'email':this.__list[key].email},{$set:{
 			stats:this.__list[key].stats,
 		}},{upsert: false,multi: false,w: 0});

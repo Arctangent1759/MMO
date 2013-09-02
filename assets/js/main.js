@@ -61,7 +61,7 @@ window.onunload=function(){
 //////////////////////////////////////////////////////
 
 $(document).ready(function(){
-	preload({'background':'clouds.png','landscape':'online_communities_2_large.png'},function(images){
+	preload({'background':'clouds.png','landscape':'online_communities_2_large.png','playerSprite':'sprite.png'},function(images){
 		init();
 		paint(new Graphics(document.getElementById(CANVAS_ID),document.getElementById(CANVAS_ID).getContext('2d'),images));
 	});
@@ -196,7 +196,7 @@ function paint(graphics){
 		var me;
 		for (var i = 0; i < players.length; i++){
 			if (players[i].username!=playerData.username){
-				graphics.circle(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,Math.PI/2,15,'white','red');
+				graphics.image('playerSprite',players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,Math.PI/2);
 				//Draw health bar
 				graphics.rect(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y+25,0,30*players[i].health/players[i].max_health,5,'white','red');
 				//Construct radar list
@@ -287,8 +287,9 @@ function Graphics(cvs,ctx,images){
 	this.image=function(imgName,x,y,angle){
 		this.ctx.save();
 		var img = images[imgName];
-		this.ctx.rotate(angle);
-		this.ctx.translate(this.cvs.width/2-img.width/2+x,this.cvs.height/2-img.height/2-y);
+		this.ctx.translate(this.cvs.width/2+x,this.cvs.height/2-y);
+		this.ctx.rotate(angle+3*Math.PI/2);
+		this.ctx.translate(img.width/2,-img.height/2);
 		this.ctx.drawImage(img,0,0);
 		this.ctx.restore();
 	}
