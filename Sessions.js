@@ -55,7 +55,7 @@ var Sessions=function(){
 		//Commmit data to database
 		this.__db.update({'email':this.__EmailToKey[key]},{$set:{
 			stats:this.__list[key].stats,
-		}},{upsert: false,multi: false});
+		}},{upsert: false,multi: false,w: 0});
 		delete this.__EmailToKey[this.__list[key].email];
 		delete this.__list[key];
 		return true;
