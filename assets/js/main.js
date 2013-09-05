@@ -9,6 +9,18 @@ var PADDING=50;
 var RADAR_RADIUS=100;
 var RADAR_SPEED=.05;
 var RADAR_REACH=10000;
+var EARSHOT=2000
+var NUMSOUNDREGISTERS=100;
+
+var IMAGES={
+	'background':'clouds.png',
+	'landscape':'online_communities_2_large.png',
+	'playerSprite':'sprite.png',
+}
+var SOUNDS={
+	'bgm0':{'filename':'airship','loop':true},
+}
+var AUDIO_EXTENSIONS=['.mp3','.ogg']
 
 //sessionKey
 var sessionKey=processQueryString().sessionKey;
@@ -48,27 +60,21 @@ window.requestAnimFrame = (function(){
 		);
 })();
 
-/*
-window.onunload=function(){
-	socket.emit('logout',{sessionKey:sessionKey});
-}
-*/
-
-
 
 //////////////////////////////////////////////////////
 //        ***        Program Body        ***        //
 //////////////////////////////////////////////////////
 
 $(document).ready(function(){
-	preload({'background':'clouds.png','landscape':'online_communities_2_large.png','playerSprite':'sprite.png'},function(images){
+	preload(IMAGES,SOUNDS,function(images,sounds){
+		x=sounds;
 		init();
-		paint(new Graphics(document.getElementById(CANVAS_ID),document.getElementById(CANVAS_ID).getContext('2d'),images));
+		//sounds['bgm0'].loop().play();
+		paint(new Graphics(document.getElementById(CANVAS_ID),document.getElementById(CANVAS_ID).getContext('2d'),images), sounds);
 	});
 });
 
 function init(){
-
 	//Alert the server of your connection.
 	socket.emit('setup',{sessionKey:sessionKey});
 
@@ -165,7 +171,9 @@ function init(){
 
 
 
-function paint(graphics){
+var x
+function paint(graphics,sound){
+	//Graphics
 	var radar_pts=[];
 
 	command.upgrade="";
@@ -190,13 +198,13 @@ function paint(graphics){
 			}
 		}
 		//Draw player
-		graphics.circle(0,0,Math.PI/2,15,'white','blue');
+		graphics.image('playerSprite',0,0,playerData.playerObj.angle);
 
 		//Draw everybody else
 		var me;
 		for (var i = 0; i < players.length; i++){
 			if (players[i].username!=playerData.username){
-				graphics.image('playerSprite',players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,Math.PI/2);
+				graphics.image('playerSprite',players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,players[i].angle);
 				//Draw health bar
 				graphics.rect(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y+25,0,30*players[i].health/players[i].max_health,5,'white','red');
 				//Construct radar list
@@ -209,6 +217,12 @@ function paint(graphics){
 			}else{
 				me=players[i];
 			}
+
+
+			//Bullet sound effects
+			if (players[i].flags.shot){
+			}
+
 			graphics.string(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,'white',players[i].username);
 			for (var j = 0; j < players[i].bullets.length; j++){
 				graphics.circle(players[i].bullets[j]._position._x-playerData.playerObj.x,players[i].bullets[j]._position._y-playerData.playerObj.y,Math.PI/2,5,'white','yellow');
@@ -267,7 +281,7 @@ function paint(graphics){
 		radarMarkerState=(radarMarkerState+1)%25
 	}
 	//Set callback for next frame
-	window.requestAnimFrame(function(){paint(graphics);});
+	window.requestAnimFrame(function(){paint(graphics,sound);});
 }
 
 function upgradeStat(stat){
@@ -288,8 +302,8 @@ function Graphics(cvs,ctx,images){
 		this.ctx.save();
 		var img = images[imgName];
 		this.ctx.translate(this.cvs.width/2+x,this.cvs.height/2-y);
-		this.ctx.rotate(angle+3*Math.PI/2);
-		this.ctx.translate(img.width/2,-img.height/2);
+		this.ctx.rotate(-angle);
+		this.ctx.translate(-img.width/2,-img.height/2);
 		this.ctx.drawImage(img,0,0);
 		this.ctx.restore();
 	}
@@ -326,12 +340,12 @@ function Graphics(cvs,ctx,images){
 		this.ctx.save();
 		this.ctx.translate(this.cvs.width/2+x,this.cvs.height/2-y);
 		this.ctx.rotate(angle);
-		this.ctx.fillStyle=fillColor;
-		this.ctx.strokeStyle=lineColor;
 		if (fillColor){
+			this.ctx.fillStyle=fillColor;
 			this.ctx.fillRect(-width/2,-height/2,width,height);
 		}
 		if (lineColor){
+			this.ctx.strokeStyle=lineColor;
 			this.ctx.strokeRect(-width/2,-height/2,width,height);
 		}
 		this.ctx.restore();
@@ -366,20 +380,45 @@ function Graphics(cvs,ctx,images){
 		this.string(x,y,textColor,text);
 	}
 }
-function preload(sources, callback){
-	var images = {};
-	var loadedImages = 0;
-	var numImages = 0;
-	for (var src in sources) {
-		numImages++;
-	}
-	for (var src in sources) {
-		images[src] = new Image();
-		i=images[src].onload = function(){
-			if (++loadedImages >= numImages) {
-				callback(images);
+function preload(imgSources, soundSources, callback){
+
+	//Preload Sound
+	var sounds = {};
+	var manifest = [];
+	for (var src in soundSources){
+		var urls = "";
+		for (var i = 0; i < AUDIO_EXTENSIONS.length; i++){
+			if (i!=0){
+				urls+="|";
 			}
-		};
-		images[src].src = sources[src];
+			urls+=soundSources[src].filename+AUDIO_EXTENSIONS[i];
+		}
+		manifest.push({
+			id:src, 
+			src:urls,
+		});
+		//sounds[src]=new buzz.sound(urls,{preload:true,autoplay:false,loop:soundSources[src].loop});
 	}
+	queue = new createjs.LoadQueue();
+	queue.installPlugin(createjs.Sound);
+	queue.loadManifest(manifest);
+
+	queue.addEventListener("complete", function(){
+		//Preload Images
+		var images = {};
+		var loadedImages = 0;
+		var numImages = 0;
+		for (var src in imgSources) {
+			numImages++;
+		}
+		for (var src in imgSources) {
+			images[src] = new Image();
+			i=images[src].onload = function(){
+				if (++loadedImages >= numImages) {
+					callback(images,sounds);
+				}
+			};
+			images[src].src = imgSources[src];
+		}
+	});
 }

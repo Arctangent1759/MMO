@@ -6,7 +6,7 @@ constants={
   'db_port':27017,
 
   //Server behavior
-  'session_timeout':1000,
+  'session_timeout':10000,
   'gameRefresh':15,
 
   //Physical Constants
@@ -23,6 +23,7 @@ constants={
   'bullet_base_dice':6,
   'bullet_base_dice_num':6,
   'player_base_health':100,
+  'turn_velocity_threshold':1.5,
 
   //Gameplay Constants
   'skillPointsPerLevel':3,

@@ -29,6 +29,12 @@ function Physics(sessions){
 	var sessions=this.sessions;
 	var physObj = this;
 	sessions.each(function(key,value){
+		for (var i in value.gameState.flags){
+			//Unset all state flags.
+			value.gameState.flags[i]=false;
+		}
+	});
+	sessions.each(function(key,value){
 	  if (typeof(value.playerObj.x)!='number' || typeof(value.playerObj.y)!='number'){
 		value.playerObj.x = 0;
 		value.playerObj.y = 0;
@@ -157,6 +163,7 @@ function Physics(sessions){
 			  colValue.gameState.bullets.splice(i,1);
 
 			  value.gameState.health-=constants.bullet_base_damage+dice.d(constants.bullet_base_dice_num,constants.bullet_base_dice)+computeBonus(colValue.stats.strength);
+			  value.gameState.flags.hit=true;
 			  if (value.gameState.health<=0){
 				//Increment XP
 				colValue.stats.experience+=computeExp(value.stats);
@@ -165,6 +172,7 @@ function Physics(sessions){
 				  colValue.stats.skillPoints+=constants.skillPointsPerLevel;
 				  //Level up logic
 				  colValue.stats.experience=0;
+				  colValue.flags.levelUp=true;
 				}
 				//For dead players
 				physObj.removePlayer(key);

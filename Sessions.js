@@ -36,6 +36,7 @@ var Sessions=function(){
 				health:false,
 				x:false,
 				y:false,
+				angle:0,
 				bullets:[],
 			},
 			gameState:false,

@@ -11,6 +11,11 @@ function Player(x,y,vx,vy,ax,ay,stats){
 	this._acceleration = new Vector(ax,ay);
 	this.bullets=[];
 	this.fireCounter=0;
+	this.flags={
+		'shot':false,
+		'hit':false,
+		'levelUp':false,
+	};
 
 	//Init temp_Stats
 	this.max_health=constants.player_base_health+computeBonus(stats.constitution)*10;
@@ -51,8 +56,9 @@ Player.prototype.acceleration=function(vec){
 
 Player.prototype.spawnBullet=function(v){
 	if (this.fireCounter <= 0){
-		var b = new Bullet(this.position().x(),this.position().y(),constants.bullet_speed*v.x(),constants.bullet_speed*v.y());
+		var b = new Bullet(this.position().x(),this.position().y(),constants.bullet_speed*v.x()+this.velocity().x(),constants.bullet_speed*v.y()+this.velocity().y());
 		this.bullets.push(b);
+		this.flags.shot=true;
 
 		//Update momentum
 		var v_parallel = this.velocity().getUnitVector().scale(
@@ -95,8 +101,9 @@ Player.prototype.commit=function(){
 Player.prototype.inform=function(p){
 	p.x=this.position().x();
 	p.y=this.position().y();
-	p.vx=this.velocity().x();
-	p.vy=this.velocity().y();
+	if (this.velocity().norm()>constants.turn_velocity_threshold){
+		p.angle=Math.atan2(this.velocity().y(),this.velocity().x());
+	}
 	p.bullets=this.bullets;
 	p.max_health=this.max_health;
 	p.health=this.health;
@@ -104,6 +111,7 @@ Player.prototype.inform=function(p){
 	p.exp=this.stats.experience;
 	p.level=this.stats.level;
 	p.stats=this.stats;
+	p.flags=this.flags;
 }
 
 exports.Player=Player;
