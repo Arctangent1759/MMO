@@ -172,7 +172,7 @@ function Physics(sessions){
 				  colValue.stats.skillPoints+=constants.skillPointsPerLevel;
 				  //Level up logic
 				  colValue.stats.experience=0;
-				  colValue.flags.levelUp=true;
+				  //colValue.flags.levelUp=true;
 				}
 				//For dead players
 				physObj.removePlayer(key);

@@ -19,6 +19,7 @@ var IMAGES={
 }
 var SOUNDS={
 	'bgm0':{'filename':'airship','loop':true},
+	'shot':{'filename':'shot','loop':false},
 }
 var AUDIO_EXTENSIONS=['.mp3','.ogg']
 
@@ -70,6 +71,7 @@ $(document).ready(function(){
 		x=sounds;
 		init();
 		//sounds['bgm0'].loop().play();
+		createjs.Sound.play("bgm0","none",0,0,-1);
 		paint(new Graphics(document.getElementById(CANVAS_ID),document.getElementById(CANVAS_ID).getContext('2d'),images), sounds);
 	});
 });
@@ -221,6 +223,7 @@ function paint(graphics,sound){
 
 			//Bullet sound effects
 			if (players[i].flags.shot){
+				createjs.Sound.play("shot","none",0,0,0,1,0);
 			}
 
 			graphics.string(players[i].x-playerData.playerObj.x,players[i].y-playerData.playerObj.y,'white',players[i].username);

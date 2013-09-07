@@ -6,7 +6,7 @@ constants={
   'db_port':27017,
 
   //Server behavior
-  'session_timeout':10000,
+  'session_timeout':60000,
   'gameRefresh':15,
 
   //Physical Constants
@@ -18,7 +18,7 @@ constants={
   'bullet_speed':16,
   'fire_rate':5,
   'max_bullets':20,
-  'bullet_mass':1,
+  'bullet_mass':0,
   'bullet_base_damage':5,
   'bullet_base_dice':6,
   'bullet_base_dice_num':6,
